@@ -24,7 +24,7 @@ enum CigarStrength {
 model User {
   id        Int   @id @default(autoincrement())
   email     String   @unique @db.VarChar(255)
-  password  String @db.VarChar(60)
+  password  String? @db.VarChar(60)
   phoneNumber String?
 
   // Auth0 user id
@@ -37,7 +37,7 @@ model User {
   passwordHash String?
   fullName   String?
   location   String?
-  porilfeImageUrl String?
+  profileImageUrl String?
   isPremium Boolean @default(false)
   badgeDisplayPreference Json
   
