@@ -3,7 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { environment } from './config/environment';
 import authRoutes from './routes/auth.routes';
-import { errorHandler } from './middleware/auth.middleware';
+import humidorRoutes from './routes/humidor.routes'
+import { errorHandler } from './middleware/error.middleware';
 
 const app = express();
 
@@ -11,7 +12,7 @@ const app = express();
 const corsOptions = {
   origin: [
     environment.FRONTEND_URL,
-    'https://cigarmancave.us.auth0.com' // Add Auth0 domain
+    'https://cigarmancave.us.auth0.com' 
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -40,6 +41,9 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/humidors', humidorRoutes);
+
+
 
 // Error handling
 app.use(errorHandler);
