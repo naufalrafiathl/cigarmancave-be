@@ -1,4 +1,3 @@
-// src/dtos/humidor.dto.ts
 export interface CreateHumidorDto {
     name: string;
     description?: string;
@@ -18,4 +17,5 @@ export interface CreateHumidorDto {
     purchaseDate: string;
     purchaseLocation?: string;
     notes?: string;
+    isAddQuantity?: boolean;
   }

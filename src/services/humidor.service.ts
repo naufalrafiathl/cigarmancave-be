@@ -100,15 +100,39 @@ export class HumidorService {
 
   async addCigarToHumidor(userId: number, humidorId: number, dto: AddCigarToHumidorDto): Promise<HumidorCigar> {
     const humidor = await this.prisma.humidor.findUnique({
-      where: { id: humidorId }
+      where: { id: humidorId },
+      include: {
+        cigars: {
+          include: {
+            cigar: true
+          }
+        }
+      }
     });
+
+
 
     if (!humidor) {
       throw new NotFoundException('Humidor not found');
     }
 
+    console.log('test',humidor)
+
     if (humidor.userId !== userId) {
       throw new UnauthorizedException('Not authorized to add cigars to this humidor');
+    }
+
+    if(dto.isAddQuantity && humidor && humidor.cigars ){
+        for(let i = 0; i < humidor?.cigars?.length; i++){
+            if(dto.cigarId===humidor.cigars[i].cigarId){
+                console.log(dto.cigarId===humidor.cigars[i].cigarId)
+                return this.prisma.humidorCigar.update({
+                    where: {id: humidor.cigars[i].id},
+                    data: {quantity: dto.quantity+humidor.cigars[i].quantity}
+                  });
+                  
+            }
+        }
     }
 
     return this.prisma.humidorCigar.create({
