@@ -125,7 +125,6 @@ export class HumidorService {
     if(dto.isAddQuantity && humidor && humidor.cigars ){
         for(let i = 0; i < humidor?.cigars?.length; i++){
             if(dto.cigarId===humidor.cigars[i].cigarId){
-                console.log(dto.cigarId===humidor.cigars[i].cigarId)
                 return this.prisma.humidorCigar.update({
                     where: {id: humidor.cigars[i].id},
                     data: {quantity: dto.quantity+humidor.cigars[i].quantity}
