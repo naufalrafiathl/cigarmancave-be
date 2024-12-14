@@ -1,4 +1,3 @@
-// src/controllers/humidor.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { HumidorService } from '../services/humidor.service';
 import { CreateHumidorDto, UpdateHumidorDto, AddCigarToHumidorDto } from '../dtos/humidor.dto';

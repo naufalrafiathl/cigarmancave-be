@@ -116,8 +116,6 @@ export class HumidorService {
       throw new NotFoundException('Humidor not found');
     }
 
-    console.log('test',humidor)
-
     if (humidor.userId !== userId) {
       throw new UnauthorizedException('Not authorized to add cigars to this humidor');
     }

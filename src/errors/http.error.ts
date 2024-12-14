@@ -1,4 +1,3 @@
-// src/errors/http.errors.ts
 import { AppError } from './base.error';
 
 export class BadRequestError extends AppError {
