@@ -1,6 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
-import { HumidorService } from '../services/humidor.service';
-import { CreateHumidorDto, UpdateHumidorDto, AddCigarToHumidorDto } from '../dtos/humidor.dto';
+import { Request, Response, NextFunction } from "express";
+import { HumidorService } from "../services/humidor.service";
+import {
+  CreateHumidorDto,
+  UpdateHumidorDto,
+  AddCigarToHumidorDto,
+} from "../dtos/humidor.dto";
 
 export class HumidorController {
   private humidorService: HumidorService;
@@ -10,11 +14,11 @@ export class HumidorController {
   }
 
   createHumidor = (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user!.id;
     const dto: CreateHumidorDto = req.body;
-    
-    this.humidorService.createHumidor(userId, dto)
-      .then(humidor => {
+
+    this.humidorService
+      .createHumidor(dto)
+      .then((humidor) => {
         res.status(201).json(humidor);
       })
       .catch(next);
@@ -23,9 +27,10 @@ export class HumidorController {
   getHumidor = (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user!.id;
     const humidorId = parseInt(req.params.humidorId);
-    
-    this.humidorService.getHumidor(userId, humidorId)
-      .then(humidor => {
+
+    this.humidorService
+      .getHumidor(userId, humidorId)
+      .then((humidor) => {
         res.json(humidor);
       })
       .catch(next);
@@ -33,9 +38,11 @@ export class HumidorController {
 
   getUserHumidors = (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user!.id;
-    
-    this.humidorService.getUserHumidors(userId)
-      .then(humidors => {
+    console.log("id user", req.user);
+
+    this.humidorService
+      .getUserHumidors(userId)
+      .then((humidors) => {
         res.json(humidors);
       })
       .catch(next);
@@ -45,9 +52,14 @@ export class HumidorController {
     const userId = req.user!.id;
     const humidorId = parseInt(req.params.humidorId);
     const dto: UpdateHumidorDto = req.body;
-    
-    this.humidorService.updateHumidor(userId, humidorId, dto)
-      .then(humidor => {
+
+    console.log("update userid", req.user);
+    console.log("humidorid", parseInt(req.params.humidorId));
+    console.log("dro", dto);
+
+    this.humidorService
+      .updateHumidor(userId, humidorId, dto)
+      .then((humidor) => {
         res.json(humidor);
       })
       .catch(next);
@@ -56,8 +68,9 @@ export class HumidorController {
   deleteHumidor = (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user!.id;
     const humidorId = parseInt(req.params.humidorId);
-    
-    this.humidorService.deleteHumidor(userId, humidorId)
+
+    this.humidorService
+      .deleteHumidor(userId, humidorId)
       .then(() => {
         res.status(204).send();
       })
@@ -68,20 +81,40 @@ export class HumidorController {
     const userId = req.user!.id;
     const humidorId = parseInt(req.params.humidorId);
     const dto: AddCigarToHumidorDto = req.body;
-    
-    this.humidorService.addCigarToHumidor(userId, humidorId, dto)
-      .then(humidorCigar => {
+
+    console.log("Received request:", {
+      userId,
+      humidorId,
+      dto,
+    });
+
+    this.humidorService
+      .addCigarToHumidor(userId, humidorId, dto)
+      .then((humidorCigar) => {
         res.status(201).json(humidorCigar);
       })
-      .catch(next);
+      .catch((error) => {
+        console.error("Error adding cigar to humidor:", {
+          error: error.message,
+          stack: error.stack,
+          userId,
+          humidorId,
+          dto,
+        });
+        next(error);
+      });
   };
-
-  removeCigarFromHumidor = (req: Request, res: Response, next: NextFunction) => {
+  removeCigarFromHumidor = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
     const userId = req.user!.id;
     const humidorId = parseInt(req.params.humidorId);
     const humidorCigarId = parseInt(req.params.humidorCigarId);
-    
-    this.humidorService.removeCigarFromHumidor(userId, humidorId, humidorCigarId)
+
+    this.humidorService
+      .removeCigarFromHumidor(userId, humidorId, humidorCigarId)
       .then(() => {
         res.status(204).send();
       })

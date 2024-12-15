@@ -1,7 +1,11 @@
 // src/services/humidor.service.ts
-import { PrismaClient, Humidor, HumidorCigar } from '@prisma/client';
-import { CreateHumidorDto, UpdateHumidorDto, AddCigarToHumidorDto } from '../dtos/humidor.dto';
-import { NotFoundException, UnauthorizedException } from '../errors';
+import { PrismaClient, Humidor, HumidorCigar } from "@prisma/client";
+import {
+  CreateHumidorDto,
+  UpdateHumidorDto,
+  AddCigarToHumidorDto,
+} from "../dtos/humidor.dto";
+import { NotFoundException, UnauthorizedException } from "../errors";
 
 export class HumidorService {
   private prisma: PrismaClient;
@@ -10,35 +14,38 @@ export class HumidorService {
     this.prisma = new PrismaClient();
   }
 
-  async createHumidor(userId: number, dto: CreateHumidorDto): Promise<Humidor> {
+  async createHumidor(dto: CreateHumidorDto): Promise<Humidor> {
     return this.prisma.humidor.create({
       data: {
         name: dto.name,
         description: dto.description,
         imageUrl: dto.imageUrl,
-        userId: userId
-      }
+        userId: dto.userId,
+      },
     });
   }
 
-  async getHumidor(userId: number, humidorId: number): Promise<Humidor & { cigars: HumidorCigar[] }> {
+  async getHumidor(
+    userId: number,
+    humidorId: number
+  ): Promise<Humidor & { cigars: HumidorCigar[] }> {
     const humidor = await this.prisma.humidor.findUnique({
       where: { id: humidorId },
       include: {
         cigars: {
           include: {
-            cigar: true
-          }
-        }
-      }
+            cigar: true,
+          },
+        },
+      },
     });
 
     if (!humidor) {
-      throw new NotFoundException('Humidor not found');
+      throw new NotFoundException("Humidor not found");
     }
 
     if (humidor.userId !== userId) {
-      throw new UnauthorizedException('Not authorized to access this humidor');
+      throw new UnauthorizedException("Not authorized to access this humidor");
     }
 
     return humidor;
@@ -50,24 +57,32 @@ export class HumidorService {
       include: {
         cigars: {
           include: {
-            cigar: true
-          }
-        }
-      }
+            cigar: true,
+          },
+        },
+      },
     });
   }
 
-  async updateHumidor(userId: number, humidorId: number, dto: UpdateHumidorDto): Promise<Humidor> {
+  async updateHumidor(
+    userId: number,
+    humidorId: number,
+    dto: UpdateHumidorDto
+  ): Promise<Humidor> {
+    console.log("userid", userId);
+    console.log("humid", humidorId);
+    console.log("dto", dto);
+
     const humidor = await this.prisma.humidor.findUnique({
-      where: { id: humidorId }
+      where: { id: humidorId },
     });
 
     if (!humidor) {
-      throw new NotFoundException('Humidor not found');
+      throw new NotFoundException("Humidor not found");
     }
 
     if (humidor.userId !== userId) {
-      throw new UnauthorizedException('Not authorized to update this humidor');
+      throw new UnauthorizedException("Not authorized to update this humidor");
     }
 
     return this.prisma.humidor.update({
@@ -75,110 +90,124 @@ export class HumidorService {
       data: {
         name: dto.name ?? undefined,
         description: dto.description ?? undefined,
-        imageUrl: dto.imageUrl ?? undefined
-      }
+      },
     });
   }
 
   async deleteHumidor(userId: number, humidorId: number): Promise<void> {
     const humidor = await this.prisma.humidor.findUnique({
-      where: { id: humidorId }
+      where: { id: humidorId },
     });
 
     if (!humidor) {
-      throw new NotFoundException('Humidor not found');
+      throw new NotFoundException("Humidor not found");
     }
 
     if (humidor.userId !== userId) {
-      throw new UnauthorizedException('Not authorized to delete this humidor');
+      throw new UnauthorizedException("Not authorized to delete this humidor");
     }
 
     await this.prisma.humidor.delete({
-      where: { id: humidorId }
+      where: { id: humidorId },
     });
   }
 
-  async addCigarToHumidor(userId: number, humidorId: number, dto: AddCigarToHumidorDto): Promise<HumidorCigar> {
-    const humidor = await this.prisma.humidor.findUnique({
-      where: { id: humidorId },
-      include: {
-        cigars: {
-          include: {
-            cigar: true
-          }
-        }
+  async addCigarToHumidor(
+    userId: number,
+    humidorId: number,
+    dto: AddCigarToHumidorDto
+  ): Promise<HumidorCigar> {
+    try {
+      const humidor = await this.prisma.humidor.findUnique({
+        where: { id: humidorId },
+        include: {
+          cigars: {
+            include: {
+              cigar: true,
+            },
+          },
+        },
+      });
+
+      if (!humidor) {
+        throw new NotFoundException("Humidor not found");
       }
-    });
 
+      if (humidor.userId !== userId) {
+        throw new UnauthorizedException(
+          "Not authorized to add cigars to this humidor"
+        );
+      }
 
-
-    if (!humidor) {
-      throw new NotFoundException('Humidor not found');
-    }
-
-    if (humidor.userId !== userId) {
-      throw new UnauthorizedException('Not authorized to add cigars to this humidor');
-    }
-
-    if(dto.isAddQuantity && humidor && humidor.cigars ){
-        for(let i = 0; i < humidor?.cigars?.length; i++){
-            if(dto.cigarId===humidor.cigars[i].cigarId){
-                return this.prisma.humidorCigar.update({
-                    where: {id: humidor.cigars[i].id},
-                    data: {quantity: dto.quantity+humidor.cigars[i].quantity}
-                  });
-                  
-            }
-        }
-    }
-
-    return this.prisma.humidorCigar.create({
-      data: {
+      const data: {
+        humidorId: number;
+        cigarId: number;
+        quantity: number;
+        purchasePrice: number;
+        purchaseDate: Date;
+        purchaseLocation?: string;
+        notes?: string;
+      } = {
         humidorId,
         cigarId: dto.cigarId,
         quantity: dto.quantity,
-        purchasePrice: dto.purchasePrice,
-        purchaseDate: new Date(dto.purchaseDate),
-        purchaseLocation: dto.purchaseLocation,
-        notes: dto.notes
-      },
-      include: {
-        cigar: true
+        purchasePrice: dto.purchasePrice ?? 0.0,
+        purchaseDate: dto.purchaseDate
+          ? new Date(dto.purchaseDate)
+          : new Date(),
+      };
+
+      if (dto.purchaseLocation) {
+        data.purchaseLocation = dto.purchaseLocation;
       }
-    });
+
+      if (dto.notes) {
+        data.notes = dto.notes;
+      }
+
+      console.log("Final data to be inserted:", data);
+
+      return this.prisma.humidorCigar.create({
+        data,
+        include: {
+          cigar: true,
+        },
+      });
+    } catch (error) {
+      console.error("Error in addCigarToHumidor:", error);
+      throw error;
+    }
   }
 
-  async removeCigarFromHumidor(userId: number, humidorId: number, humidorCigarId: number): Promise<void> {
-    // First verify the humidor exists and belongs to the user
+  async removeCigarFromHumidor(
+    userId: number,
+    humidorId: number,
+    humidorCigarId: number
+  ): Promise<void> {
     const humidor = await this.prisma.humidor.findUnique({
-        where: { id: humidorId }
+      where: { id: humidorId },
     });
 
     if (!humidor) {
-        throw new NotFoundException('Humidor not found');
+      throw new NotFoundException("Humidor not found");
     }
 
     if (humidor.userId !== userId) {
-        throw new UnauthorizedException('Not authorized to access this humidor');
+      throw new UnauthorizedException("Not authorized to access this humidor");
     }
 
-    // Then verify the cigar exists in this specific humidor
     const humidorCigar = await this.prisma.humidorCigar.findFirst({
-        where: {
-            AND: [
-                { id: humidorCigarId },
-                { humidorId: humidorId } // Add this condition to ensure cigar belongs to specified humidor
-            ]
-        }
+      where: {
+        AND: [{ id: humidorCigarId }, { humidorId: humidorId }],
+      },
     });
 
     if (!humidorCigar) {
-        throw new NotFoundException('Cigar not found in this humidor');
+      throw new NotFoundException("Cigar not found in this humidor");
     }
 
-    // If all validations pass, remove the cigar
     await this.prisma.humidorCigar.delete({
-        where: { id: humidorCigarId }
+      where: { id: humidorCigarId },
     });
-}
+  }
 }

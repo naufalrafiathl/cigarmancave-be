@@ -1,7 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
-import { auth } from 'express-oauth2-jwt-bearer';
-import { environment } from '../config/environment';
-import { UnauthorizedError } from '../errors';
+import { Request, Response, NextFunction } from "express";
+import { auth } from "express-oauth2-jwt-bearer";
+import { environment } from "../config/environment";
+import { UnauthorizedError } from "../errors";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 declare global {
   namespace Express {
@@ -16,7 +19,7 @@ declare global {
 export const validateAuth0Token = auth({
   audience: environment.AUTH0_AUDIENCE,
   issuerBaseURL: environment.AUTH0_ISSUER_BASE_URL,
-  tokenSigningAlg: 'RS256'
+  tokenSigningAlg: "RS256",
 });
 
 export const authenticate = async (
@@ -27,19 +30,33 @@ export const authenticate = async (
   try {
     await validateAuth0Token(req, res, (err) => {
       if (err) {
-        throw new UnauthorizedError('Invalid token');
+        throw new UnauthorizedError("Invalid token");
       }
     });
 
-    // At this point, token is valid
     const auth0Id = req.auth?.payload.sub;
     if (!auth0Id) {
-      throw new UnauthorizedError('User ID not found in token');
+      throw new UnauthorizedError("User ID not found in token");
     }
 
-    req.user = {
-      id: 1, 
-    };
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: auth0Id },
+    });
+
+    if (!user) {
+      const newUser = await prisma.user.create({
+        data: {
+          auth0Id: auth0Id,
+          email: req.auth?.payload.email as string,
+          badgeDisplayPreference: {},
+          emailVerified: false,
+          isPremium: false,
+        },
+      });
+      req.user = { id: newUser.id };
+    } else {
+      req.user = { id: user.id };
+    }
 
     next();
   } catch (error) {
