@@ -152,6 +152,26 @@ model Cigar {
   tradeItems TradeItems[]
 }
 
+model Pairing {
+  id        Int      @id @default(autoincrement())
+  name      String   // e.g., "Coffee", "Whiskey", "Wine"
+  type      String   // Category like "Beverage", "Food"
+  reviews   ReviewPairing[]
+}
+
+model ReviewPairing {
+  id        Int      @id @default(autoincrement())
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reviewId  Int
+  pairing   Pairing  @relation(fields: [pairingId], references: [id])
+  pairingId Int
+  notes     String? 
+
+  @@unique([reviewId, pairingId])
+  @@index([reviewId])
+  @@index([pairingId])
+}
+
 model Review {
   id Int @id @default(autoincrement())
   createdAt DateTime @default(now())
@@ -163,13 +183,15 @@ model Review {
 
   strength CigarStrength?
 
+  // General scores (1-5)
   constructionScore Int?
   drawScore Int?
   flavorScore Int?
   burnScore Int?
   impressionScore Int?
-  overallScore Int?
+  overallScore Float?
 
+  // Flavor profile scores (1-3)
   flavorPepperScore Int?
   flavorChocolateScore Int?
   flavorCreamyScore Int?
@@ -193,6 +215,7 @@ model Review {
   cigar Cigar @relation(fields: [cigarId], references: [id])
   cigarId Int
   posts Post[]
+  pairings ReviewPairing[]
 
   @@index([userId, createdAt])
   @@index([cigarId, overallScore])
