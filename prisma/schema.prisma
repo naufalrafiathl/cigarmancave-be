@@ -48,6 +48,7 @@ model User {
   // Relationships
   humidors Humidor[]
   reviews Review[]
+  posts Post[]
   comments Comment[]
   likes Like[]
   achievements UserAchievement[]
@@ -83,7 +84,6 @@ model HumidorCigar {
   purchaseLocation String?
   notes String?
 
-  // Relationships
   humidor Humidor @relation(fields: [humidorId], references: [id])
   humidorId Int
   cigar Cigar @relation(fields: [cigarId], references: [id])
@@ -99,6 +99,34 @@ model Brand {
 
   // Relationships
   cigars Cigar[]
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  content     String
+  imageUrls   String[]  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  images      PostImage[]
+
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  review      Review?   @relation(fields: [reviewId], references: [id])
+  reviewId    Int?
+  comments    Comment[]
+  likes       Like[]
+
+  @@index([userId, createdAt])
+  @@index([reviewId])
+}
+
+model PostImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
+  
+  @@index([postId])
 }
 
 model Cigar {
@@ -164,8 +192,7 @@ model Review {
   userId Int
   cigar Cigar @relation(fields: [cigarId], references: [id])
   cigarId Int
-  comments Comment[]
-  likes Like[]
+  posts Post[]
 
   @@index([userId, createdAt])
   @@index([cigarId, overallScore])
@@ -187,15 +214,15 @@ model Comment {
   // Relationships
   user User @relation(fields: [userId], references: [id])
   userId Int
-  review Review @relation(fields: [reviewId], references: [id])
-  reviewId Int
+  post Post @relation(fields: [postId], references: [id]) 
+  postId Int
 
   // Self-referential relationship
   parent Comment? @relation("CommentReplies", fields: [parentId], references: [id])
   parentId Int?
   replies Comment[] @relation("CommentReplies")
 
-  @@index([reviewId])
+  @@index([postId])
   @@index([userId])
   @@index([parentId])
 }
@@ -206,10 +233,10 @@ model Like {
   // Relationships
   user User @relation(fields: [userId], references: [id])
   userId Int
-  review Review @relation(fields: [reviewId], references: [id])
-  reviewId Int
+  post Post @relation(fields: [postId], references: [id]) 
+  postId Int 
 
-  @@id([reviewId,userId])
+  @@id([postId,userId])
 }
 
 model Achievement {
