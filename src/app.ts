@@ -5,6 +5,7 @@ import { environment } from "./config/environment";
 import authRoutes from "./routes/auth.routes";
 import humidorRoutes from "./routes/humidor.routes";
 import cigarRoutes from "./routes/cigar.routes";
+import reviewRoutes from './routes/review.routes';
 import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
@@ -38,6 +39,8 @@ app.use((req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/humidors", humidorRoutes);
 app.use("/api/cigars", cigarRoutes);
+app.use("/api/reviews", reviewRoutes);
+
 
 app.use(errorHandler);
 

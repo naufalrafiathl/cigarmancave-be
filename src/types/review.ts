@@ -1,5 +1,7 @@
 export interface CreateReviewDTO {
     cigarId: number;
+    duration?: number;
+    
     constructionScore?: number;
     drawScore?: number;
     flavorScore?: number;

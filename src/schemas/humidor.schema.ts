@@ -1,5 +1,4 @@
-// src/schemas/humidor.schema.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 export const CreateHumidorSchema = z.object({
   body: z.object({
