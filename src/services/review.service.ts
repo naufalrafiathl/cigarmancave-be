@@ -156,19 +156,31 @@ export class ReviewService {
     if (page < 1 || limit < 1) {
       throw new ValidationError('Invalid pagination parameters');
     }
-
+  
     const skip = (page - 1) * limit;
     const where = {
       ...(cigarId && { cigarId }),
       ...(userId && { userId })
     };
-
+  
     try {
       const [reviews, total] = await Promise.all([
         prisma.review.findMany({
           where,
           include: {
             images: true,
+            cigar: {
+              include: {
+                brand: true
+              }
+            },
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                profileImageUrl: true
+              }
+            },
             pairings: {
               include: {
                 pairing: true
@@ -181,9 +193,19 @@ export class ReviewService {
         }),
         prisma.review.count({ where })
       ]);
-
+  
+      // Transform the data to match the frontend expectations
+      const transformedReviews = reviews.map(review => ({
+        ...review,
+        cigar: {
+          id: review.cigar.id,
+          name: review.cigar.name,
+          brand: review.cigar.brand.name
+        }
+      }));
+  
       return {
-        reviews,
+        reviews: transformedReviews,
         pagination: {
           total,
           pages: Math.ceil(total / limit),
@@ -192,6 +214,7 @@ export class ReviewService {
         }
       };
     } catch (error) {
+      console.error('Error fetching reviews:', error);
       throw new BadRequestError('Failed to fetch reviews');
     }
   }
