@@ -146,21 +146,25 @@ export class ReviewService {
   }
 
   async getReviews(options: {
+    userId: number;
     cigarId?: number;
-    userId?: number;
     page?: number;
     limit?: number;
   }) {
-    const { cigarId, userId, page = 1, limit = 10 } = options;
+    const { userId, cigarId, page = 1, limit = 10 } = options;
     
+    if (!userId) {
+      throw new ValidationError('User ID is required');
+    }
+
     if (page < 1 || limit < 1) {
       throw new ValidationError('Invalid pagination parameters');
     }
   
     const skip = (page - 1) * limit;
     const where = {
-      ...(cigarId && { cigarId }),
-      ...(userId && { userId })
+      userId,
+      ...(cigarId && { cigarId })
     };
   
     try {
@@ -194,7 +198,6 @@ export class ReviewService {
         prisma.review.count({ where })
       ]);
   
-      // Transform the data to match the frontend expectations
       const transformedReviews = reviews.map(review => ({
         ...review,
         cigar: {

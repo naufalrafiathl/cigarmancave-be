@@ -46,11 +46,15 @@ export class ReviewController {
 
   async getReviews(req: Request, res: Response, next: NextFunction) {
     try {
-      const { cigarId, userId, page, limit } = req.query;
+      const userId = req?.user?.id
+      if (!userId) {
+        throw new UnauthorizedError('User not authenticated');
+      }
+      const { cigarId, page, limit } = req.query;
 
       const reviews = await reviewService.getReviews({
         cigarId: cigarId ? parseInt(cigarId as string) : undefined,
-        userId: userId ? parseInt(userId as string) : undefined,
+        userId,
         page: page ? parseInt(page as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined
       });
