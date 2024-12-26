@@ -34,6 +34,7 @@ export class ReviewService {
             userId,
             cigarId: data.cigarId,
             date: new Date(),
+            strength: data.strength,
             duration: data.duration,
             constructionScore: data.constructionScore,
             drawScore: data.drawScore,
