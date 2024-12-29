@@ -8,6 +8,7 @@ import cigarRoutes from "./routes/cigar.routes";
 import reviewRoutes from './routes/review.routes';
 import postRoutes from './routes/post.routes';
 import commentRoutes from './routes/comment.routes';
+import feedRoutes from './routes/feed.routes';
 
 import { errorHandler } from "./middleware/error.middleware";
 
@@ -44,6 +45,7 @@ app.use("/api/humidors", humidorRoutes);
 app.use("/api/cigars", cigarRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/posts", postRoutes);
+app.use('/api/feed', feedRoutes);
 app.use('/api/posts/:postId/comments', commentRoutes);
 
 

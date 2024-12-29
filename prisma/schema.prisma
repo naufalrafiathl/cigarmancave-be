@@ -118,6 +118,7 @@ model Post {
   comments    Comment[]
   likes       Like[]
 
+  @@index([createdAt])
   @@index([userId, createdAt])
   @@index([reviewId])
 }
