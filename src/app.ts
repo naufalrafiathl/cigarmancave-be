@@ -11,8 +11,7 @@ import commentRoutes from './routes/comment.routes';
 import feedRoutes from './routes/feed.routes';
 import uploadRoutes from './routes/upload.routes'
 import profileRoutes from './routes/profile.routes'
-
-
+import cigarInsightsRoutes from './routes/cigar-insights.routes';
 import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
@@ -52,7 +51,7 @@ app.use('/api/feed', feedRoutes);
 app.use('/api/posts/:postId/comments', commentRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/profile', profileRoutes);
-
+app.use('/api/cigars', cigarInsightsRoutes);
 
 
 app.use(errorHandler);

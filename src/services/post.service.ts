@@ -7,13 +7,11 @@ import {
   UnauthorizedError,
   AppError,
 } from "../errors";
-import { ModerationService, ModerationError } from './moderation.service';
-
+import { ModerationService, ModerationError } from "./moderation.service";
 
 const prisma = new PrismaClient();
 
 export class PostService {
-
   private moderationService: ModerationService;
 
   constructor() {
@@ -92,7 +90,6 @@ export class PostService {
   async createPost(userId: number, data: any) {
     return await prisma.$transaction(async (tx) => {
       try {
-
         await this.moderationService.validateContent({
           text: data.content,
           imageUrls: data.imageUrls,
@@ -111,7 +108,6 @@ export class PostService {
           }
         }
 
-        // Create the post
         const post = await tx.post.create({
           data: {
             content: data.content,
@@ -141,10 +137,14 @@ export class PostService {
         return completePost;
       } catch (error) {
         if (error instanceof ModerationError) {
-          throw error; // Pass through the moderation error
+          throw error;
         }
-        throw new AppError("Failed to create post", 400);
+        throw new AppError(
+          error instanceof Error ? error.message : 'Failed to create post',
+          400
+        );
       }
+      
     });
   }
 
@@ -218,7 +218,6 @@ export class PostService {
     data: any,
     isDetailView = false
   ) {
-    // Verify post exists and belongs to user
     const post = await prisma.post.findUnique({
       where: { id: postId },
     });
