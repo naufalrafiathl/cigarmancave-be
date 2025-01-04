@@ -1,11 +1,22 @@
 import { AppError } from './base.error';
 
-export class BadRequestError extends AppError {
-  constructor(message: string = 'Bad Request') {
-    super(message, 400);
-  }
+interface ErrorDetails {
+  message: string;
+  details?: Record<string, any>;
 }
 
+export class BadRequestError extends Error {
+  constructor(errorInfo: string | ErrorDetails) {
+    const message = typeof errorInfo === 'string' ? errorInfo : errorInfo.message;
+    super(message);
+    
+    if (typeof errorInfo !== 'string') {
+      (this as any).details = errorInfo.details;
+    }
+
+    this.name = 'BadRequestError';
+  }
+}
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Unauthorized') {
     super(message, 401);

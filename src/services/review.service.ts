@@ -1,10 +1,18 @@
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError, ValidationError, BadRequestError } from '../errors';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { ModerationService, ModerationError } from "./moderation.service";
 
 const prisma = new PrismaClient();
 
 export class ReviewService {
+
+  private moderationService: ModerationService;
+
+  constructor() {
+    this.moderationService = new ModerationService();
+  }
+
   private calculateOverallScore(review: any): number {
     const scores = [
       review.constructionScore,
@@ -19,6 +27,12 @@ export class ReviewService {
   }
 
   async createReview(userId: number, data: any) {
+
+    await this.moderationService.validateContent({
+      text: data.notes
+    });
+
+
     const cigar = await prisma.cigar.findUnique({
       where: { id: data.cigarId }
     });
@@ -116,7 +130,9 @@ export class ReviewService {
 
         return completeReview;
       } catch (error) {
-        console.error('Review creation error:', error); 
+        if (error instanceof ModerationError) {
+          throw error; // Pass through the moderation error
+        }
         if (error instanceof PrismaClientKnownRequestError) {
           throw new BadRequestError(`Database error: ${error.message}`);
         }
