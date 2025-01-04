@@ -1,60 +1,68 @@
 // src/services/post.service.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { NotFoundError, ValidationError, BadRequestError, UnauthorizedError } from '../errors';
 
 const prisma = new PrismaClient();
 
 export class PostService {
-  private readonly defaultPostInclude = {
-    user: {
-      select: {
-        id: true,
-        fullName: true,
-        profileImageUrl: true,
-      }
-    },
-    images: true,
-    review: true,
-    comments: {
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            profileImageUrl: true,
-          }
+  private getPostInclude(isDetailView = false): Prisma.PostInclude {
+    return {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          profileImageUrl: true,
+        }
+      },
+      images: true,
+      review: true,
+      comments: {
+        where: {
+          parentId: null  // Only include top-level comments
         },
-        replies: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                profileImageUrl: true,
+        ...(isDetailView ? {} : { take: 3 }),
+        orderBy: {
+          createdAt: 'desc' as const
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              profileImageUrl: true,
+            }
+          },
+          replies: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  profileImageUrl: true,
+                }
               }
             }
           }
         }
-      }
-    },
-    likes: {
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
+      },
+      likes: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+            }
           }
         }
+      },
+      _count: {
+        select: {
+          comments: true,
+          likes: true,
+        }
       }
-    },
-    _count: {
-      select: {
-        comments: true,
-        likes: true,
-      }
-    }
-  };
-
+    };
+  }
   async createPost(userId: number, data: any) {
     return await prisma.$transaction(async (tx) => {
       try {
@@ -91,7 +99,7 @@ export class PostService {
 
         const completePost = await tx.post.findUnique({
           where: { id: post.id },
-          include: this.defaultPostInclude
+          include: this.getPostInclude(false)
         });
 
         if (!completePost) {
@@ -105,10 +113,10 @@ export class PostService {
     });
   }
 
-  async getPostById(id: number) {
+  async getPostById(id: number, isDetailView = false) {
     const post = await prisma.post.findUnique({
       where: { id },
-      include: this.defaultPostInclude
+      include: this.getPostInclude(isDetailView)
     });
 
     if (!post) {
@@ -123,8 +131,9 @@ export class PostService {
     reviewId?: number;
     page?: number;
     limit?: number;
+    isDetailView?: boolean;
   }) {
-    const { userId, reviewId, page = 1, limit = 10 } = options;
+    const { userId, reviewId, page = 1, limit = 10, isDetailView = false } = options;
     
     if (page < 1 || limit < 1) {
       throw new ValidationError('Invalid pagination parameters');
@@ -140,7 +149,7 @@ export class PostService {
       const [posts, total] = await Promise.all([
         prisma.post.findMany({
           where,
-          include: this.defaultPostInclude,
+          include: this.getPostInclude(isDetailView),
           orderBy: { createdAt: 'desc' },
           skip,
           take: limit
@@ -162,34 +171,49 @@ export class PostService {
     }
   }
 
-  async updatePost(userId: number, postId: number, data: any) {
+  async updatePost(userId: number, postId: number, data: any, isDetailView = false) {
     // Verify post exists and belongs to user
     const post = await prisma.post.findUnique({
       where: { id: postId }
     });
-
+  
     if (!post) {
       throw new NotFoundError('Post not found');
     }
-
+  
     if (post.userId !== userId) {
       throw new UnauthorizedError('Not authorized to update this post');
     }
-
+  
     try {
       const updatedPost = await prisma.post.update({
         where: { id: postId },
         data: {
           content: data.content
         },
-        include: this.defaultPostInclude
+        include: this.getPostInclude(isDetailView)
       });
-
-      return updatedPost;
+  
+      const totalLikes = updatedPost.likes.length;
+      const totalComments = updatedPost._count.comments;
+      const totalEngagement = totalLikes + totalComments;
+  
+      return {
+        ...updatedPost,
+        engagement: {
+          totalLikes,
+          totalComments,
+          totalEngagement,
+          hasMoreComments: !isDetailView && updatedPost.comments.length >= 3
+        }
+      };
     } catch (error) {
+      console.error('Failed to update post:', error);
       throw new BadRequestError('Failed to update post');
     }
   }
+
+  
 
   async deletePost(userId: number, postId: number) {
     const post = await prisma.post.findUnique({

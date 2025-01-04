@@ -40,6 +40,9 @@ export class FeedService {
       }
     },
     comments: {
+      where: {
+        parentId: null  // Only include top-level comments
+      },
       take: 3,
       orderBy: {
         createdAt: 'desc' as const

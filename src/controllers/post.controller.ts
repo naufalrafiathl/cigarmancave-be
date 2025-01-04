@@ -26,11 +26,12 @@ export class PostController {
   async getPostById(req: Request, res: Response, next: NextFunction) {
     try {
       const postId = parseInt(req.params.id);
+      const isDetailView = req.query.isDetailView === 'true';
       if (isNaN(postId)) {
         throw new BadRequestError('Invalid post ID');
       }
 
-      const post = await postService.getPostById(postId);
+      const post = await postService.getPostById(postId,isDetailView);
       
       res.json({
         status: 'success',
