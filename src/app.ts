@@ -9,6 +9,7 @@ import reviewRoutes from './routes/review.routes';
 import postRoutes from './routes/post.routes';
 import commentRoutes from './routes/comment.routes';
 import feedRoutes from './routes/feed.routes';
+import uploadRoutes from './routes/upload.routes'
 
 import { errorHandler } from "./middleware/error.middleware";
 
@@ -47,6 +48,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/posts", postRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/posts/:postId/comments', commentRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 
 
