@@ -10,6 +10,8 @@ import postRoutes from './routes/post.routes';
 import commentRoutes from './routes/comment.routes';
 import feedRoutes from './routes/feed.routes';
 import uploadRoutes from './routes/upload.routes'
+import profileRoutes from './routes/profile.routes'
+
 
 import { errorHandler } from "./middleware/error.middleware";
 
@@ -49,6 +51,7 @@ app.use("/api/posts", postRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/posts/:postId/comments', commentRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/profile', profileRoutes);
 
 
 
