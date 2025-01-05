@@ -38,6 +38,7 @@ export class ProfileService {
         location: true,
         profileImageUrl: true,
         isPremium: true,
+        isOnboarded: true,
         badgeDisplayPreference: true,
         phoneNumber: true,
         createdAt: true,
@@ -90,7 +91,8 @@ export class ProfileService {
           location: data.location,
           profileImageUrl: data.profileImageUrl,
           badgeDisplayPreference: data.badgeDisplayPreference,
-          phoneNumber: data.phoneNumber
+          phoneNumber: data.phoneNumber,
+          isOnboarded: true,
         },
         select: {
           id: true,
@@ -125,7 +127,8 @@ export class ProfileService {
       const updatedUser = await prisma.user.update({
         where: { id: this.user.id },
         data: {
-          profileImageUrl: uploadResult.medium || uploadResult.original
+          profileImageUrl: uploadResult.medium || uploadResult.original,
+          isOnboarded: true
         }
       });
 

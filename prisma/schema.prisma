@@ -41,6 +41,7 @@ model User {
   location   String?
   profileImageUrl String?
   isPremium Boolean @default(false)
+  isOnboarded Boolean @default(false)
   badgeDisplayPreference Json
   
 
