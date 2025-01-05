@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { HumidorController } from '../controllers/humidor.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validateRequest } from '../middleware/validation.middleware';
-import { CreateHumidorSchema, UpdateHumidorSchema, AddCigarToHumidorSchema } from '../schemas/humidor.schema';
+import { CreateHumidorSchema, UpdateHumidorSchema, AddCigarToHumidorSchema, UpdateHumidorCigarSchema } from '../schemas/humidor.schema';
 
 const router = Router();
 const humidorController = new HumidorController();
@@ -40,6 +40,12 @@ router.post(
   '/:humidorId/cigars',
   validateRequest(AddCigarToHumidorSchema),
   humidorController.addCigarToHumidor
+);
+
+router.put(
+  '/:humidorId/cigars/:humidorCigarId',
+  validateRequest(UpdateHumidorCigarSchema),
+  humidorController.updateCigarInHumidor
 );
 
 router.delete(

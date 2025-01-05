@@ -19,3 +19,12 @@ export interface AddCigarToHumidorDto {
   purchaseLocation?: string;
   notes?: string;
 }
+
+export interface UpdateHumidorCigarDto {
+  quantity?: number;
+  purchasePrice?: number;
+  purchaseDate?: string | Date;
+  purchaseLocation?: string;
+  notes?: string;
+}
+

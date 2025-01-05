@@ -25,3 +25,13 @@ export const AddCigarToHumidorSchema = z.object({
     notes: z.string().optional(),
   }),
 });
+
+export const UpdateHumidorCigarSchema = z.object({
+  body: z.object({
+    quantity: z.number().int().positive().optional(),
+    purchasePrice: z.number().optional(),
+    purchaseDate: z.string().datetime().optional(),
+    purchaseLocation: z.string().optional(),
+    notes: z.string().optional(),
+  }),
+});

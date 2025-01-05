@@ -104,6 +104,42 @@ export class HumidorController {
         next(error);
       });
   };
+
+  updateCigarInHumidor = (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user!.id;
+    const humidorId = parseInt(req.params.humidorId);
+    const humidorCigarId = parseInt(req.params.humidorCigarId);
+    const dto = req.body;
+  
+    console.log("Received update request:", {
+      userId,
+      humidorId,
+      humidorCigarId,
+      dto,
+    });
+  
+    this.humidorService
+      .updateHumidorCigar(userId, humidorId, humidorCigarId, dto)
+      .then((updatedHumidorCigar) => {
+        res.json({
+          status: 'success',
+          data: updatedHumidorCigar
+        });
+      })
+      .catch((error) => {
+        console.error("Error updating cigar in humidor:", {
+          error: error.message,
+          stack: error.stack,
+          userId,
+          humidorId,
+          humidorCigarId,
+          dto,
+        });
+        next(error);
+      });
+  };
+  
+
   removeCigarFromHumidor = (
     req: Request,
     res: Response,

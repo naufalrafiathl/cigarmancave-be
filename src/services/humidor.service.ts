@@ -4,6 +4,7 @@ import {
   CreateHumidorDto,
   UpdateHumidorDto,
   AddCigarToHumidorDto,
+  UpdateHumidorCigarDto
 } from "../dtos/humidor.dto";
 import { NotFoundException, UnauthorizedException } from "../errors";
 
@@ -178,7 +179,72 @@ export class HumidorService {
       throw error;
     }
   }
+  async updateHumidorCigar(
+    userId: number,
+    humidorId: number,
+    humidorCigarId: number,
+    dto: UpdateHumidorCigarDto
+  ): Promise<HumidorCigar> {
+    // First verify the humidor exists and belongs to the user
+    const humidor = await this.prisma.humidor.findUnique({
+      where: { id: humidorId },
+    });
 
+    if (!humidor) {
+      throw new NotFoundException("Humidor not found");
+    }
+
+    if (humidor.userId !== userId) {
+      throw new UnauthorizedException("Not authorized to update cigars in this humidor");
+    }
+
+    // Verify the humidorCigar exists and belongs to this humidor
+    const existingHumidorCigar = await this.prisma.humidorCigar.findFirst({
+      where: {
+        AND: [
+          { id: humidorCigarId },
+          { humidorId: humidorId }
+        ]
+      }
+    });
+
+    if (!existingHumidorCigar) {
+      throw new NotFoundException("Cigar not found in this humidor");
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (typeof dto.quantity !== 'undefined') {
+      updateData.quantity = dto.quantity;
+    }
+    
+    if (typeof dto.purchasePrice !== 'undefined') {
+      updateData.purchasePrice = dto.purchasePrice;
+    }
+    
+    if (dto.purchaseDate) {
+      updateData.purchaseDate = new Date(dto.purchaseDate);
+    }
+    
+    if (typeof dto.purchaseLocation !== 'undefined') {
+      updateData.purchaseLocation = dto.purchaseLocation;
+    }
+    
+    if (typeof dto.notes !== 'undefined') {
+      updateData.notes = dto.notes;
+    }
+
+    // Update the humidorCigar
+    return this.prisma.humidorCigar.update({
+      where: { id: humidorCigarId },
+      data: updateData,
+      include: {
+        cigar: true,
+      }
+    });
+  }
+  
   async removeCigarFromHumidor(
     userId: number,
     humidorId: number,
