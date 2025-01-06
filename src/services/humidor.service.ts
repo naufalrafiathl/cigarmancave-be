@@ -4,7 +4,7 @@ import {
   CreateHumidorDto,
   UpdateHumidorDto,
   AddCigarToHumidorDto,
-  UpdateHumidorCigarDto
+  UpdateHumidorCigarDto,
 } from "../dtos/humidor.dto";
 import { NotFoundException, UnauthorizedException } from "../errors";
 
@@ -148,6 +148,7 @@ export class HumidorService {
         purchaseDate: Date;
         purchaseLocation?: string;
         notes?: string;
+        imageUrl?: string;
       } = {
         humidorId,
         cigarId: dto.cigarId,
@@ -164,6 +165,10 @@ export class HumidorService {
 
       if (dto.notes) {
         data.notes = dto.notes;
+      }
+
+      if (dto.imageUrl) {
+        data.imageUrl = dto.imageUrl;
       }
 
       console.log("Final data to be inserted:", data);
@@ -195,17 +200,16 @@ export class HumidorService {
     }
 
     if (humidor.userId !== userId) {
-      throw new UnauthorizedException("Not authorized to update cigars in this humidor");
+      throw new UnauthorizedException(
+        "Not authorized to update cigars in this humidor"
+      );
     }
 
     // Verify the humidorCigar exists and belongs to this humidor
     const existingHumidorCigar = await this.prisma.humidorCigar.findFirst({
       where: {
-        AND: [
-          { id: humidorCigarId },
-          { humidorId: humidorId }
-        ]
-      }
+        AND: [{ id: humidorCigarId }, { humidorId: humidorId }],
+      },
     });
 
     if (!existingHumidorCigar) {
@@ -214,25 +218,29 @@ export class HumidorService {
 
     // Prepare update data
     const updateData: any = {};
-    
-    if (typeof dto.quantity !== 'undefined') {
+
+    if (typeof dto.quantity !== "undefined") {
       updateData.quantity = dto.quantity;
     }
-    
-    if (typeof dto.purchasePrice !== 'undefined') {
+
+    if (typeof dto.purchasePrice !== "undefined") {
       updateData.purchasePrice = dto.purchasePrice;
     }
-    
+
     if (dto.purchaseDate) {
       updateData.purchaseDate = new Date(dto.purchaseDate);
     }
-    
-    if (typeof dto.purchaseLocation !== 'undefined') {
+
+    if (typeof dto.purchaseLocation !== "undefined") {
       updateData.purchaseLocation = dto.purchaseLocation;
     }
-    
-    if (typeof dto.notes !== 'undefined') {
+
+    if (typeof dto.notes !== "undefined") {
       updateData.notes = dto.notes;
+    }
+
+    if (typeof dto.imageUrl !== "undefined") {
+      updateData.imageUrl = dto.imageUrl;
     }
 
     // Update the humidorCigar
@@ -241,10 +249,10 @@ export class HumidorService {
       data: updateData,
       include: {
         cigar: true,
-      }
+      },
     });
   }
-  
+
   async removeCigarFromHumidor(
     userId: number,
     humidorId: number,

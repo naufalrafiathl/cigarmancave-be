@@ -18,6 +18,7 @@ export interface AddCigarToHumidorDto {
   purchaseDate?: string;
   purchaseLocation?: string;
   notes?: string;
+  imageUrl?: string;
 }
 
 export interface UpdateHumidorCigarDto {
@@ -26,5 +27,7 @@ export interface UpdateHumidorCigarDto {
   purchaseDate?: string | Date;
   purchaseLocation?: string;
   notes?: string;
+  imageUrl?: string;
+
 }
 

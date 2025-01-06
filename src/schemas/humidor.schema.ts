@@ -23,6 +23,7 @@ export const AddCigarToHumidorSchema = z.object({
     purchaseDate: z.string().datetime(),
     purchaseLocation: z.string().optional(),
     notes: z.string().optional(),
+    imageUrl: z.string().url().optional(), 
   }),
 });
 

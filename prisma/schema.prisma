@@ -86,6 +86,7 @@ model HumidorCigar {
   purchaseDate DateTime
   purchaseLocation String?
   notes String?
+  imageUrl String?
 
   humidor Humidor @relation(fields: [humidorId], references: [id])
   humidorId Int
