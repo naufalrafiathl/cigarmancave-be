@@ -7,14 +7,12 @@ const uploadController = new UploadController();
 
 router.use(authenticate);
 
-// Direct upload endpoint
 router.post(
   '/image',
   uploadController.uploadMiddleware,
   uploadController.uploadImage
 );
 
-// Get signed URL for client-side upload
 router.post('/signed-url', uploadController.getSignedUrl);
 
 export default router;

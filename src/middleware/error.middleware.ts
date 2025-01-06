@@ -1,4 +1,3 @@
-// src/middleware/error.middleware.ts
 import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import { AppError } from '../errors/base.error';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';

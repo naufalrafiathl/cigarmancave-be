@@ -131,7 +131,7 @@ export class ReviewService {
         return completeReview;
       } catch (error) {
         if (error instanceof ModerationError) {
-          throw error; // Pass through the moderation error
+          throw error; 
         }
         if (error instanceof PrismaClientKnownRequestError) {
           throw new BadRequestError(`Database error: ${error.message}`);

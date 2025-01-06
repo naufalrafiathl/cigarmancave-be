@@ -28,6 +28,5 @@ export interface UpdateHumidorCigarDto {
   purchaseLocation?: string;
   notes?: string;
   imageUrl?: string;
-
 }
 

@@ -9,7 +9,6 @@ const feedController = new FeedController();
 
 router.use(authenticate);
 
-// Get feed with filters
 router.get(
   '/',
   validateRequest(GetFeedSchema),

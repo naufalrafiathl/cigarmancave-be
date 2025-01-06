@@ -80,7 +80,7 @@ export class CommentService {
       return comment;
     } catch (error) {
       if (error instanceof ModerationError) {
-        throw error; // Pass through the moderation error
+        throw error;
       }
       throw new BadRequestError("Failed to create comment");
     }
@@ -117,7 +117,7 @@ export class CommentService {
     const skip = (page - 1) * limit;
     const where = {
       postId,
-      parentId: parentId ?? null, // If parentId not provided, get top-level comments
+      parentId: parentId ?? null, 
     };
 
     try {
@@ -152,7 +152,6 @@ export class CommentService {
     commentId: number,
     data: any
   ) {
-    // Verify comment exists and belongs to the user
     const comment = await prisma.comment.findUnique({
       where: {
         id: commentId,
@@ -184,7 +183,6 @@ export class CommentService {
   }
 
   async deleteComment(userId: number, postId: number, commentId: number) {
-    // Verify comment exists and belongs to the user
     const comment = await prisma.comment.findUnique({
       where: {
         id: commentId,

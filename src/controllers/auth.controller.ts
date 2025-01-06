@@ -51,7 +51,6 @@ export class AuthController {
     try {
       const userInfo = req.body.user;
       const auth0User = req.auth as Auth0JwtPayload;
-      console.log('user INFOOOO',userInfo)
       // Debug log to see the complete token payload
       console.log('CALLBACK AUTH0 USER DATA:', JSON.stringify(auth0User, null, 2));
       
