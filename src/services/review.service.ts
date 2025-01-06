@@ -6,7 +6,6 @@ import { ModerationService, ModerationError } from "./moderation.service";
 const prisma = new PrismaClient();
 
 export class ReviewService {
-
   private moderationService: ModerationService;
 
   constructor() {
@@ -27,11 +26,9 @@ export class ReviewService {
   }
 
   async createReview(userId: number, data: any) {
-
     await this.moderationService.validateContent({
       text: data.notes
     });
-
 
     const cigar = await prisma.cigar.findUnique({
       where: { id: data.cigarId }
@@ -56,6 +53,9 @@ export class ReviewService {
             burnScore: data.burnScore,
             impressionScore: data.impressionScore,
             overallScore: this.calculateOverallScore(data),
+            FirstThird: data.FirstThird || [],
+            SecondThird: data.SecondThird || [],
+            FinalThird: data.FinalThird || [],
             flavorPepperScore: data.flavorPepperScore,
             flavorChocolateScore: data.flavorChocolateScore,
             flavorCreamyScore: data.flavorCreamyScore,

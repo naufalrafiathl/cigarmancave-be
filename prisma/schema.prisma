@@ -199,6 +199,9 @@ model Review {
   burnScore Int?
   impressionScore Int?
   overallScore Float?
+  FirstThird String[]
+  SecondThird String[]
+  FinalThird String[]
 
   // Flavor profile scores (1-3)
   flavorPepperScore Int?
