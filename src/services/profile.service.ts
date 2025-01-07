@@ -28,6 +28,98 @@ export class ProfileService {
     this.user = user;
   }
 
+  async updateBadgePreferences(preferences: {
+    achievementIds: number[];  // IDs of achievements to display
+    displayOrder?: boolean;    // Whether to respect the order of IDs
+  }) {
+    try {
+      // First verify that the user has earned these achievements
+      const user = await prisma.user.findUnique({
+        where: { id: this.user.id },
+        include: {
+          achievements: {
+            include: {
+              achievement: true
+            }
+          }
+        }
+      });
+  
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+  
+      // Verify all achievements exist and are earned
+      const earnedAchievementIds = user.achievements.map(ua => ua.achievementId);
+      const invalidAchievements = preferences.achievementIds.filter(
+        id => !earnedAchievementIds.includes(id)
+      );
+  
+      if (invalidAchievements.length > 0) {
+        throw new ValidationError('Some achievements have not been earned yet');
+      }
+  
+      // Update the user's badge preferences
+      const updatedUser = await prisma.user.update({
+        where: { id: this.user.id },
+        data: {
+          badgeDisplayPreference: {
+            displayedAchievements: preferences.achievementIds,
+            displayOrder: preferences.displayOrder ?? true
+          }
+        }
+      });
+  
+      return updatedUser.badgeDisplayPreference;
+    } catch (error) {
+      throw new BadRequestError('Failed to update badge preferences');
+    }
+  }
+  
+  // Add a method to get displayed achievements
+  async getDisplayedAchievements() {
+    const user = await prisma.user.findUnique({
+      where: { id: this.user.id },
+      include: {
+        achievements: {
+          include: {
+            achievement: true
+          }
+        }
+      }
+    });
+  
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+  
+    const preferences = user.badgeDisplayPreference as {
+      displayedAchievements: number[];
+      displayOrder: boolean;
+    } | null;
+  
+    if (!preferences?.displayedAchievements?.length) {
+      // Return empty array if no preferences are set
+      return [];
+    }
+  
+    // Return only explicitly selected achievements
+    const achievementMap = new Map(
+      user.achievements.map(ua => [ua.achievementId, ua])
+    );
+  
+    return preferences.displayedAchievements
+      .map(id => {
+        const userAchievement = achievementMap.get(id);
+        if (!userAchievement) return null;
+        return {
+          ...userAchievement.achievement,
+          earnedAt: userAchievement.earnedAt
+        };
+      })
+      .filter(Boolean);
+  }
+
   async getProfile() {
     const user = await prisma.user.findUnique({
       where: { id: this.user.id },
@@ -138,21 +230,6 @@ export class ProfileService {
       };
     } catch (error) {
       throw new BadRequestError('Failed to upload profile image');
-    }
-  }
-
-  async updateBadgePreferences(preferences: Record<string, any>) {
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id: this.user.id },
-        data: {
-          badgeDisplayPreference: preferences
-        }
-      });
-
-      return updatedUser.badgeDisplayPreference;
-    } catch (error) {
-      throw new BadRequestError('Failed to update badge preferences');
     }
   }
 

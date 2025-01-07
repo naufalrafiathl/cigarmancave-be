@@ -1,7 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { NotFoundError, ValidationError, BadRequestError } from '../errors';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { PrismaClient } from "@prisma/client";
+import { NotFoundError, ValidationError, BadRequestError } from "../errors";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ModerationService, ModerationError } from "./moderation.service";
+import { achievementEvents } from "./events/achievement.event";
+import { AchievementEventType } from "../types/achievement";
 
 const prisma = new PrismaClient();
 
@@ -18,24 +20,26 @@ export class ReviewService {
       review.drawScore,
       review.flavorScore,
       review.burnScore,
-      review.impressionScore
-    ].filter(score => score !== undefined) as number[];
+      review.impressionScore,
+    ].filter((score) => score !== undefined) as number[];
 
     if (scores.length === 0) return 0;
-    return Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2));
+    return Number(
+      (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2)
+    );
   }
 
   async createReview(userId: number, data: any) {
     await this.moderationService.validateContent({
-      text: data.notes
+      text: data.notes,
     });
 
     const cigar = await prisma.cigar.findUnique({
-      where: { id: data.cigarId }
+      where: { id: data.cigarId },
     });
 
     if (!cigar) {
-      throw new NotFoundError('Cigar not found');
+      throw new NotFoundError("Cigar not found");
     }
 
     return await prisma.$transaction(async (tx) => {
@@ -70,41 +74,41 @@ export class ReviewService {
             flavorCoffeeScore: data.flavorCoffeeScore,
             flavorBittersScore: data.flavorBittersScore,
             notes: data.notes,
-            buyAgain: data.buyAgain
-          }
+            buyAgain: data.buyAgain,
+          },
         });
 
         if (data.images?.length) {
           await tx.reviewImage.createMany({
             data: data.images.map((url: string) => ({
               url,
-              reviewId: review.id
-            }))
+              reviewId: review.id,
+            })),
           });
         }
 
         if (data.pairings?.length) {
           for (const pairing of data.pairings) {
             const pairingRecord = await tx.pairing.upsert({
-              where: { 
+              where: {
                 name_type: {
                   name: pairing.name,
-                  type: pairing.type
-                }
+                  type: pairing.type,
+                },
               },
               create: {
                 name: pairing.name,
-                type: pairing.type
+                type: pairing.type,
               },
-              update: {}
+              update: {},
             });
 
             await tx.reviewPairing.create({
               data: {
                 reviewId: review.id,
                 pairingId: pairingRecord.id,
-                notes: pairing.notes
-              }
+                notes: pairing.notes,
+              },
             });
           }
         }
@@ -117,26 +121,32 @@ export class ReviewService {
               select: {
                 id: true,
                 fullName: true,
-                profileImageUrl: true
-              }
+                profileImageUrl: true,
+              },
             },
-            cigar: true
-          }
+            cigar: true,
+          },
         });
 
         if (!completeReview) {
-          throw new NotFoundError('Failed to retrieve created review');
+          throw new NotFoundError("Failed to retrieve created review");
         }
+
+        // Add achievement event after successful review creation
+        achievementEvents.emitAchievementEvent({
+          userId: userId,
+          type: AchievementEventType.REVIEW_CREATED,
+        });
 
         return completeReview;
       } catch (error) {
         if (error instanceof ModerationError) {
-          throw error; 
+          throw error;
         }
         if (error instanceof PrismaClientKnownRequestError) {
           throw new BadRequestError(`Database error: ${error.message}`);
         }
-        throw error; 
+        throw error;
       }
     });
   }
@@ -148,14 +158,14 @@ export class ReviewService {
         images: true,
         pairings: {
           include: {
-            pairing: true
-          }
-        }
-      }
+            pairing: true,
+          },
+        },
+      },
     });
 
     if (!review) {
-      throw new NotFoundError('Review not found');
+      throw new NotFoundError("Review not found");
     }
 
     return review;
@@ -168,21 +178,21 @@ export class ReviewService {
     limit?: number;
   }) {
     const { userId, cigarId, page = 1, limit = 10 } = options;
-    
+
     if (!userId) {
-      throw new ValidationError('User ID is required');
+      throw new ValidationError("User ID is required");
     }
 
     if (page < 1 || limit < 1) {
-      throw new ValidationError('Invalid pagination parameters');
+      throw new ValidationError("Invalid pagination parameters");
     }
-  
+
     const skip = (page - 1) * limit;
     const where = {
       userId,
-      ...(cigarId && { cigarId })
+      ...(cigarId && { cigarId }),
     };
-  
+
     try {
       const [reviews, total] = await Promise.all([
         prisma.review.findMany({
@@ -191,50 +201,50 @@ export class ReviewService {
             images: true,
             cigar: {
               include: {
-                brand: true
-              }
+                brand: true,
+              },
             },
             user: {
               select: {
                 id: true,
                 fullName: true,
-                profileImageUrl: true
-              }
+                profileImageUrl: true,
+              },
             },
             pairings: {
               include: {
-                pairing: true
-              }
-            }
+                pairing: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           skip,
-          take: limit
+          take: limit,
         }),
-        prisma.review.count({ where })
+        prisma.review.count({ where }),
       ]);
-  
-      const transformedReviews = reviews.map(review => ({
+
+      const transformedReviews = reviews.map((review) => ({
         ...review,
         cigar: {
           id: review.cigar.id,
           name: review.cigar.name,
-          brand: review.cigar.brand.name
-        }
+          brand: review.cigar.brand.name,
+        },
       }));
-  
+
       return {
         reviews: transformedReviews,
         pagination: {
           total,
           pages: Math.ceil(total / limit),
           currentPage: page,
-          perPage: limit
-        }
+          perPage: limit,
+        },
       };
     } catch (error) {
-      console.error('Error fetching reviews:', error);
-      throw new BadRequestError('Failed to fetch reviews');
+      console.error("Error fetching reviews:", error);
+      throw new BadRequestError("Failed to fetch reviews");
     }
   }
 }

@@ -7,6 +7,8 @@ import {
   UpdateHumidorCigarDto,
 } from "../dtos/humidor.dto";
 import { NotFoundException, UnauthorizedException } from "../errors";
+import { achievementEvents } from "./events/achievement.event";
+import { AchievementEventType } from "../types/achievement";
 
 export class HumidorService {
   private prisma: PrismaClient;
@@ -16,14 +18,21 @@ export class HumidorService {
   }
 
   async createHumidor(dto: CreateHumidorDto): Promise<Humidor> {
-    return this.prisma.humidor.create({
+    const humidor = await this.prisma.humidor.create({
       data: {
         name: dto.name,
         description: dto.description,
         imageUrl: dto.imageUrl,
         userId: dto.userId,
-      },
+      }
     });
+  
+    achievementEvents.emitAchievementEvent({
+      userId: dto.userId,
+      type: AchievementEventType.HUMIDOR_CREATED
+    });
+  
+    return humidor;
   }
 
   async getHumidor(

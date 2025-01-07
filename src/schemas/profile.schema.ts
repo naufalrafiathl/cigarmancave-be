@@ -17,6 +17,11 @@ export const ImageUploadSchema = z.object({
   })
 });
 
-export const BadgePreferencesSchema = z.object({
-  body: z.record(z.any())
+export const UpdateBadgePreferencesSchema = z.object({
+  body: z.object({
+    achievementIds: z.array(z.number())
+      .min(0)
+      .max(3, 'You can display up to 3 achievements'),
+    displayOrder: z.boolean().optional()
+  })
 });

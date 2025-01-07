@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "dist/app.js",
   "scripts": {
+    "seed": "ts-node --transpile-only prisma/seed.ts",
     "dev": "nodemon src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
