@@ -49,6 +49,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relationships
+  importLogs ImportLog[]
   humidors Humidor[]
   reviews Review[]
   posts Post[]
@@ -103,6 +104,8 @@ model Brand {
 
   // Relationships
   cigars Cigar[]
+
+  @@index([name]) // Index for brand name searches
 }
 
 model Post {
@@ -156,6 +159,9 @@ model Cigar {
   humidorCigars HumidorCigar[]
   reviews Review[]
   tradeItems TradeItems[]
+
+  @@index([brandId, name]) // Compound index for faster lookups
+  @@index([name]) // Index for name searches
 }
 
 model Pairing {
@@ -352,4 +358,24 @@ model TradeItems {
   offeredById Int
   receivedBy User @relation("receivedItems", fields: [receivedById], references: [id])
   receivedById Int
+}
+
+// Add to schema.prisma
+
+model ImportLog {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  fileType        String   // Corresponds to ImportFileType enum
+  processingMethod String  // Corresponds to ProcessingMethod enum
+  confidence      Float    @default(0)
+  cost           Float    @default(0)
+  duration       Int      // Processing duration in milliseconds
+  success        Boolean
+  error          String?
+  createdAt      DateTime @default(now())
+  
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([fileType, createdAt])
 }

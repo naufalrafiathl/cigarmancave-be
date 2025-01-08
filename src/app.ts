@@ -13,6 +13,8 @@ import uploadRoutes from './routes/upload.routes'
 import profileRoutes from './routes/profile.routes'
 import cigarInsightsRoutes from './routes/cigar-insights.routes';
 import achievementRoutes from './routes/achievement.routes';
+import importRoutes from './routes/import.routes';
+
 
 import { errorHandler } from "./middleware/error.middleware";
 
@@ -55,6 +57,8 @@ app.use('/api/uploads', uploadRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/cigars', cigarInsightsRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/import', importRoutes);
+
 
 
 
