@@ -32,6 +32,53 @@ interface SimilarityMatch {
   similarity: number;
 }
 
+interface HumidorAddition {
+  quantity?: number;
+  purchasePrice?: number | null;
+  purchaseDate?: Date | null;
+  purchaseLocation?: string | null;
+  notes?: string | null;
+  imageUrl?: string | null;
+}
+
+// Different types of import confirmations
+interface ExactMatchConfirmation {
+  matchType: "exact";
+  selectedCigarId: number;
+  addToHumidor?: boolean;
+  humidorId?: number;
+  humidorData?: HumidorAddition;
+}
+
+interface PossibleMatchConfirmation {
+  matchType: "possible";
+  selectedCigarId: number;
+  addToHumidor?: boolean;
+  humidorId?: number;
+  humidorData?: HumidorAddition;
+}
+
+interface NewCigarConfirmation {
+  matchType: "new";
+  importData: CigarImportData;
+  addToHumidor?: boolean;
+  humidorId?: number;
+  humidorData?: HumidorAddition;
+}
+
+type ImportConfirmation =
+  | ExactMatchConfirmation
+  | PossibleMatchConfirmation
+  | NewCigarConfirmation;
+
+interface ImportConfirmationResult {
+  success: boolean;
+  created: number;
+  matched: number;
+  addedToHumidor: number;
+  errors: string[];
+}
+
 export class ImportService {
   private prisma: PrismaClient;
   private openai: OpenAI;
@@ -499,7 +546,7 @@ export class ImportService {
       possibilities: [],
       newEntries: [],
     };
-  
+
     // Process all cigars in parallel
     const matchPromises = importData.map(async (cigar) => {
       try {
@@ -545,7 +592,7 @@ export class ImportService {
           ORDER BY similarity DESC, brand_name, cigar_name
           LIMIT 10
         `;
-  
+
         return { cigar, matches };
       } catch (error) {
         console.error(
@@ -555,28 +602,30 @@ export class ImportService {
         return { cigar, matches: [] };
       }
     });
-  
+
     // Wait for all parallel operations to complete
     const matchResults = await Promise.all(matchPromises);
-  
+
     // Collect all cigar IDs that need details
-    const allCigarIds = matchResults.flatMap(({ matches }) => 
-      matches.map(m => m.id)
+    const allCigarIds = matchResults.flatMap(({ matches }) =>
+      matches.map((m) => m.id)
     );
-  
+
     // Fetch all cigar details in one batch query
     const cigarDetailsMap = new Map(
-      (await this.fetchCigarDetails(allCigarIds))
-        .map(cigar => [cigar.id, cigar])
+      (await this.fetchCigarDetails(allCigarIds)).map((cigar) => [
+        cigar.id,
+        cigar,
+      ])
     );
-  
+
     // Process the results using the cached details
     for (const { cigar, matches } of matchResults) {
       if (matches.length === 0) {
         result.newEntries.push(cigar);
         continue;
       }
-  
+
       // Handle exact matches (similarity >= 0.8)
       const exactMatches = matches.filter((m) => m.similarity >= 0.8);
       if (exactMatches.length > 0) {
@@ -589,16 +638,16 @@ export class ImportService {
           continue;
         }
       }
-  
+
       // Handle possible matches
       const top3Matches = matches
         .sort((a, b) => b.similarity - a.similarity)
         .slice(0, 3);
-  
+
       const possibleMatches = top3Matches
-        .map(match => cigarDetailsMap.get(match.id))
+        .map((match) => cigarDetailsMap.get(match.id))
         .filter((c): c is NonNullable<typeof c> => c !== undefined);
-  
+
       result.possibilities.push({
         importData: cigar,
         possibleMatches,
@@ -608,34 +657,34 @@ export class ImportService {
         })),
       });
     }
-  
+
     return result;
   }
-  
+
   private async fetchCigarDetails(cigarIds: number[]) {
     if (cigarIds.length === 0) return [];
-    
+
     const chunkSize = 100;
     const chunks = [];
     for (let i = 0; i < cigarIds.length; i += chunkSize) {
       chunks.push(cigarIds.slice(i, i + chunkSize));
     }
-  
+
     const results = await Promise.all(
-      chunks.map(chunk =>
+      chunks.map((chunk) =>
         this.prisma.cigar.findMany({
           where: {
             id: {
-              in: chunk
-            }
+              in: chunk,
+            },
           },
           include: {
-            brand: true
-          }
+            brand: true,
+          },
         })
       )
     );
-  
+
     return results.flat();
   }
 
@@ -792,4 +841,168 @@ export class ImportService {
 
     return strengthMap[normalized] || undefined;
   }
+  async confirmImport(
+    userId: number,
+    selections: ImportConfirmation[]
+  ): Promise<ImportConfirmationResult> {
+    const result: ImportConfirmationResult = {
+      success: true,
+      created: 0,
+      matched: 0,
+      addedToHumidor: 0,
+      errors: [],
+    };
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        for (const selection of selections) {
+          try {
+            let cigarId: number;
+
+            // Handle based on match type
+            switch (selection.matchType) {
+              case "exact":
+              case "possible":
+                cigarId = selection.selectedCigarId;
+                result.matched++;
+                break;
+
+              case "new":
+                // Find or create brand
+                let brand = await tx.brand.findFirst({
+                  where: {
+                    name: {
+                      equals: selection.importData.brand,
+                      mode: "insensitive",
+                    },
+                  },
+                });
+
+                if (!brand) {
+                  brand = await tx.brand.create({
+                    data: { name: selection.importData.brand },
+                  });
+                }
+
+                // Create new cigar
+                const newCigar = await tx.cigar.create({
+                  data: {
+                    name: selection.importData.name,
+                    brandId: brand.id,
+                    length: selection.importData.length || null,
+                    ringGauge: selection.importData.ringGauge || null,
+                    wrapper: selection.importData.wrapper || null,
+                    binder: selection.importData.binder || null,
+                    filler: selection.importData.filler || null,
+                    country: selection.importData.country || null,
+                    color: selection.importData.color || null,
+                    strength: selection.importData.strength || null,
+                  },
+                });
+
+                cigarId = newCigar.id;
+                result.created++;
+                break;
+
+              default:
+                throw new ValidationError("Invalid match type");
+            }
+
+            // Add to humidor if requested
+            if (selection.addToHumidor && selection.humidorId) {
+              // Verify humidor ownership
+              const humidor = await tx.humidor.findUnique({
+                where: {
+                  id: selection.humidorId,
+                  userId: userId,
+                },
+              });
+
+              if (!humidor) {
+                throw new ValidationError("Invalid humidor selection");
+              }
+
+              // Helper function to convert date string to valid Date object
+              const parseDate = (
+                dateString: string | Date | null | undefined
+              ): Date | null => {
+                if (!dateString) return null;
+                if (dateString instanceof Date) return dateString;
+
+                // Try to parse the date string
+                const date = new Date(dateString);
+                return isNaN(date.getTime()) ? null : date;
+              };
+
+              const existingEntry = await tx.humidorCigar.findFirst({
+                where: {
+                  humidorId: selection.humidorId,
+                  cigarId: cigarId,
+                },
+              });
+
+              const humidorData = selection.humidorData || {};
+              const parsedPurchaseDate = parseDate(humidorData.purchaseDate);
+
+              if (existingEntry) {
+                await tx.humidorCigar.update({
+                  where: { id: existingEntry.id },
+                  data: {
+                    quantity:
+                      existingEntry.quantity + (humidorData.quantity || 1),
+                    purchasePrice:
+                      humidorData.purchasePrice ?? existingEntry.purchasePrice,
+                    purchaseDate:
+                      parsedPurchaseDate ?? existingEntry.purchaseDate,
+                    purchaseLocation:
+                      humidorData.purchaseLocation ??
+                      existingEntry.purchaseLocation,
+                    notes: humidorData.notes ?? existingEntry.notes,
+                    imageUrl: humidorData.imageUrl ?? existingEntry.imageUrl,
+                  },
+                });
+              } else {
+                await tx.humidorCigar.create({
+                  data: {
+                    humidorId: selection.humidorId,
+                    cigarId: cigarId,
+                    quantity: humidorData.quantity || 1,
+                    purchasePrice: humidorData.purchasePrice || 0,
+                    purchaseDate: parsedPurchaseDate || new Date(),
+                    purchaseLocation: humidorData.purchaseLocation || null,
+                    notes: humidorData.notes || null,
+                    imageUrl: humidorData.imageUrl || null,
+                  },
+                });
+              }
+
+              result.addedToHumidor++;
+            }
+          } catch (error) {
+            const errorMessage =
+              selection.matchType === "new"
+                ? `Error processing ${selection.importData.brand} ${selection.importData.name}`
+                : `Error processing cigar ID ${selection.selectedCigarId}`;
+
+            result.errors.push(
+              `${errorMessage}: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`
+            );
+          }
+        }
+      });
+
+      result.success = result.errors.length === 0;
+      return result;
+    } catch (error) {
+      console.error("Import confirmation error:", error);
+      throw new ProcessingError(
+        error instanceof Error
+          ? error.message
+          : "Failed to process import confirmation"
+      );
+    }
+  }
+  
 }
