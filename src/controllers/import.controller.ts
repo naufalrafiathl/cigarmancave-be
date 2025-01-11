@@ -1,4 +1,3 @@
-// src/controllers/import.controller.ts
 import { Response, NextFunction } from "express";
 import { ImportService } from "../services/import.service";
 import multer from "multer";
@@ -14,7 +13,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 10 * 1024 * 1024, 
   },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
@@ -96,14 +95,12 @@ export class ImportController {
 
       const fileType = this.determineFileType(req.file.mimetype);
 
-      // Process the file
       const result = await this.importService.processImport(
         req.user.id,
         req.file,
         fileType
       );
 
-      // If processing was successful and we have data, find matches
       if (result.success && result.data) {
         const matches = await this.importService.findMatches(result.data);
 
@@ -179,7 +176,6 @@ export class ImportController {
         return;
       }
   
-      // Validate selection data
       for (const selection of selections) {
         if (!selection.matchType) {
           res.status(400).json({
@@ -223,7 +219,6 @@ export class ImportController {
             return;
         }
   
-        // Validate humidor data if adding to humidor
         if (selection.addToHumidor) {
           if (!selection.humidorId) {
             res.status(400).json({

@@ -5,11 +5,9 @@ const prisma = new PrismaClient();
 
 export class UserService {
   static async createOrUpdateUser(auth0User: Auth0User): Promise<UserProfile> {
-    // Debug log the incoming data
     console.log('USER SERVICE RECEIVED DATA:', JSON.stringify(auth0User, null, 2));
     
     try {
-      // Debug log the data being used for upsert
       const upsertData = {
         where: { auth0Id: auth0User.sub },
         update: {
@@ -31,12 +29,8 @@ export class UserService {
         },
       };
 
-      // Log the upsert data
       console.log('UPSERTING WITH DATA:', JSON.stringify(upsertData, null, 2));
-
       const user = await prisma.user.upsert(upsertData);
-
-      // Log the result
       console.log('UPSERT RESULT:', JSON.stringify(user, null, 2));
 
       return user as UserProfile;

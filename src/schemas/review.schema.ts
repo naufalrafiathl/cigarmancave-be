@@ -14,10 +14,9 @@ const CigarStrengthEnum = z.enum([
 export const CreateReviewSchema = z.object({
   body: z.object({
     cigarId: z.number().int().positive(),
-    duration: z.number().int().min(1).max(300).optional(), // Duration in minutes, max 5 hours
+    duration: z.number().int().min(1).max(300).optional(), 
     strength: CigarStrengthEnum.optional(),
 
-    // General scores (1-5)
     constructionScore: scoreRange(0, 50),
     drawScore: scoreRange(0, 50),
     flavorScore: scoreRange(0, 50),
@@ -28,7 +27,6 @@ export const CreateReviewSchema = z.object({
     SecondThird: z.array(z.string()).default([]),
     FinalThird: z.array(z.string()).default([]),
 
-    // Flavor profile scores (1-3)
     flavorPepperScore: scoreRange(0, 3),
     flavorChocolateScore: scoreRange(0, 3),
     flavorCreamyScore: scoreRange(0, 3),

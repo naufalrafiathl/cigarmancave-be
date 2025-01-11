@@ -41,7 +41,7 @@ export class FeedService {
     },
     comments: {
       where: {
-        parentId: null  // Only include top-level comments
+        parentId: null  
       },
       take: 3,
       orderBy: {

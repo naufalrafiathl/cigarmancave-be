@@ -1,4 +1,3 @@
-// src/services/comment.service.ts
 import { PrismaClient } from "@prisma/client";
 import {
   NotFoundError,
@@ -52,7 +51,6 @@ export class CommentService {
       throw new NotFoundError("Post not found");
     }
 
-    // If this is a reply, verify parent comment exists and belongs to the same post
     if (data.parentId) {
       const parentComment = await prisma.comment.findUnique({
         where: {
@@ -200,11 +198,9 @@ export class CommentService {
 
     try {
       await prisma.$transaction([
-        // First delete all replies to this comment
         prisma.comment.deleteMany({
           where: { parentId: commentId },
         }),
-        // Then delete the comment itself
         prisma.comment.delete({
           where: { id: commentId },
         }),

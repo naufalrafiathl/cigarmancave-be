@@ -1,4 +1,3 @@
-// src/routes/profile.routes.ts
 import express, {
   NextFunction,
   Request,
@@ -17,7 +16,6 @@ import {
 } from "../schemas/profile.schema";
 import { AuthenticatedRequest, FileUploadRequest } from "../types/auth";
 
-// Type assertion helper
 const handleAsync = (
   fn: (
     req: AuthenticatedRequest,
@@ -52,7 +50,6 @@ const handleFileAsync = (
   };
 };
 
-// Configure multer for image uploads
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -60,12 +57,9 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (_req, file, cb) => {
-    // Accept only image files
     if (!file.mimetype.startsWith("image/")) {
       return cb(new BadRequestError("Only image files are allowed"));
     }
-
-    // Check specific image types if needed
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.mimetype)) {
       return cb(
@@ -77,7 +71,6 @@ const upload = multer({
   },
 });
 
-// Middleware to handle multer errors
 const handleFileUpload = (
   req: Request,
   res: Response,
@@ -112,11 +105,9 @@ const handleFileUpload = (
   });
 };
 
-// Create router and controller
 const router = express.Router();
 const controller = new ProfileController();
 
-// Apply authentication middleware to all routes
 router.use(authenticate);
 
 // Profile Routes

@@ -1,4 +1,3 @@
-// src/services/cigar-insights.service.ts
 import { PrismaClient, Prisma } from '@prisma/client';
 import { BadRequestError, UnauthorizedError } from '../errors';
 import OpenAI from 'openai';
@@ -56,7 +55,6 @@ export class CigarInsightsService {
         throw new BadRequestError('Cigar not found');
       }
 
-      // Check existing insights
       if (cigar.premiumAssistantMessage) {
         const existingInsights = cigar.premiumAssistantMessage as unknown;
         if (isCigarInsights(existingInsights)) {
@@ -102,7 +100,6 @@ export class CigarInsightsService {
         throw new Error('Invalid response structure from OpenAI');
       }
 
-      // Create a strongly typed object for Prisma
       const insightsForPrisma = {
         history: parsedJson.history,
         blend: parsedJson.blend,

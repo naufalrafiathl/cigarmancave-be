@@ -1,4 +1,3 @@
-// src/routes/achievement.routes.ts
 import express from 'express';
 import { AchievementController } from '../controllers/achievement.controller';
 import { authenticate } from '../middleware/auth.middleware';

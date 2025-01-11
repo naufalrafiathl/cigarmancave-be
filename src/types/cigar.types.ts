@@ -1,4 +1,3 @@
-// src/types/cigar.types.ts
 export interface ExternalBrand {
     brandId: number;
     name: string;

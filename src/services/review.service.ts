@@ -44,7 +44,6 @@ export class ReviewService {
 
     return await prisma.$transaction(async (tx) => {
       try {
-        // Handle humidor cigar quantity update if humidorCigarId is provided
         if (data.humidorCigarId) {
           const humidorCigar = await tx.humidorCigar.findUnique({
             where: { id: data.humidorCigarId },
@@ -53,15 +52,12 @@ export class ReviewService {
             },
           });
 
-          // Only proceed with humidor operations if the cigar is found and belongs to the user
           if (humidorCigar && humidorCigar.humidor.userId === userId) {
             if (humidorCigar.quantity === 1) {
-              // If this is the last cigar, delete the record
               await tx.humidorCigar.delete({
                 where: { id: data.humidorCigarId },
               });
             } else {
-              // Otherwise, decrement the quantity
               await tx.humidorCigar.update({
                 where: { id: data.humidorCigarId },
                 data: {
@@ -72,7 +68,6 @@ export class ReviewService {
               });
             }
           }
-          // If humidor cigar not found or doesn't belong to user, just continue with review creation
         }
 
         const review = await tx.review.create({

@@ -1,4 +1,3 @@
-// src/controllers/comment.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { CommentService } from '../services/comment.service';
 import { UnauthorizedError, BadRequestError } from '../errors';

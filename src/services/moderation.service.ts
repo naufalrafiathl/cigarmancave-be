@@ -85,11 +85,9 @@ export class ModerationService {
         const violations: ModerationViolation[] = [];
         let moderationId: string = '';
   
-        // Process inputs in batches: text content together, images one by one
         const textInputs = inputs.filter(input => input.type === 'text');
         const imageInputs = inputs.filter(input => input.type === 'image_url');
   
-        // Process text inputs (if any)
         if (textInputs.length > 0) {
           const textModerationResponse = await this.openai.moderations.create({
             model: "omni-moderation-latest",
@@ -102,13 +100,12 @@ export class ModerationService {
           });
         }
   
-        // Process image inputs one by one
         for (const imageInput of imageInputs) {
           const imageModerationResponse = await this.openai.moderations.create({
             model: "omni-moderation-latest",
             input: [imageInput],
           });
-          moderationId = imageModerationResponse.id; // Update with latest ID
+          moderationId = imageModerationResponse.id; 
   
           this.processModeratedContent(imageModerationResponse.results[0], imageInput, violations);
         }

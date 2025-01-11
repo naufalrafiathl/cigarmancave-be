@@ -1,4 +1,3 @@
-// src/services/external/cigar-api.service.ts
 import axios from 'axios';
 import { API_CONFIG } from '../../config/api.config';
 import { 
@@ -31,7 +30,6 @@ export class CigarApiService {
         
         allBrands = [...allBrands, ...brands];
         
-        // If we've fetched all brands based on count, break
         if (allBrands.length >= count) break;
         
         page++;
@@ -57,7 +55,6 @@ export class CigarApiService {
         
         allCigars = [...allCigars, ...cigars];
         
-        // If we've fetched all cigars based on count, break
         if (allCigars.length >= count) break;
         
         page++;

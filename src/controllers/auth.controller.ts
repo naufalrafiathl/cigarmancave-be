@@ -8,7 +8,6 @@ export class AuthController {
   static async getProfile(req: Request, res: Response): Promise<void> {
     try {
       const auth0User = req.auth as Auth0JwtPayload;
-      // Debug log to see the complete token payload
       console.log('AUTH0 USER DATA:', JSON.stringify(auth0User, null, 2));
       
       if (!auth0User?.sub) {

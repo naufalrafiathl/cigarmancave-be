@@ -10,12 +10,10 @@ export const errorHandler: ErrorRequestHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
-  // Log error in development
   if (process.env.NODE_ENV === 'development') {
     console.error('Error:', err);
   }
 
-  // Handle ModerationError instances
   if (err instanceof ModerationError) {
     res.status(err.statusCode).json({
       status: err.status,
@@ -36,7 +34,6 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  // Handle AppError instances
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       status: err.status,
@@ -45,7 +42,6 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  // Handle Prisma errors
   if (err instanceof PrismaClientKnownRequestError) {
     res.status(400).json({
       status: 'error',
@@ -55,7 +51,6 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  // Handle Zod validation errors
   if (err instanceof ZodError) {
     res.status(422).json({
       status: 'error',
@@ -65,7 +60,6 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  // Handle unknown errors
   res.status(500).json({
     status: 'error',
     message: process.env.NODE_ENV === 'development' 

@@ -1,4 +1,3 @@
-// src/services/profile.service.ts
 import { PrismaClient } from '@prisma/client';
 import { ImageService } from './image.service';
 import { NotFoundError, ValidationError, BadRequestError } from '../errors';
@@ -29,11 +28,10 @@ export class ProfileService {
   }
 
   async updateBadgePreferences(preferences: {
-    achievementIds: number[];  // IDs of achievements to display
-    displayOrder?: boolean;    // Whether to respect the order of IDs
+    achievementIds: number[]; 
+    displayOrder?: boolean;   
   }) {
     try {
-      // First verify that the user has earned these achievements
       const user = await prisma.user.findUnique({
         where: { id: this.user.id },
         include: {
@@ -49,7 +47,6 @@ export class ProfileService {
         throw new NotFoundError('User not found');
       }
   
-      // Verify all achievements exist and are earned
       const earnedAchievementIds = user.achievements.map(ua => ua.achievementId);
       const invalidAchievements = preferences.achievementIds.filter(
         id => !earnedAchievementIds.includes(id)
@@ -59,7 +56,6 @@ export class ProfileService {
         throw new ValidationError('Some achievements have not been earned yet');
       }
   
-      // Update the user's badge preferences
       const updatedUser = await prisma.user.update({
         where: { id: this.user.id },
         data: {
@@ -76,7 +72,6 @@ export class ProfileService {
     }
   }
   
-  // Add a method to get displayed achievements
   async getDisplayedAchievements() {
     const user = await prisma.user.findUnique({
       where: { id: this.user.id },
@@ -99,11 +94,9 @@ export class ProfileService {
     } | null;
   
     if (!preferences?.displayedAchievements?.length) {
-      // Return empty array if no preferences are set
       return [];
     }
   
-    // Return only explicitly selected achievements
     const achievementMap = new Map(
       user.achievements.map(ua => [ua.achievementId, ua])
     );
@@ -158,7 +151,6 @@ export class ProfileService {
   }
 
   async updateProfile(data: UpdateProfileData) {
-    // Validate data
     if (data.fullName && (data.fullName.length < 2 || data.fullName.length > 50)) {
       throw new ValidationError('Full name must be between 2 and 50 characters');
     }
@@ -168,7 +160,6 @@ export class ProfileService {
     }
 
     if (data.phoneNumber) {
-      // Basic phone number validation - can be enhanced based on requirements
       const phoneRegex = /^\+?[\d\s-]{8,20}$/;
       if (!phoneRegex.test(data.phoneNumber)) {
         throw new ValidationError('Invalid phone number format');
@@ -207,7 +198,6 @@ export class ProfileService {
 
   async uploadProfileImage(file: Express.Multer.File, options: ProfileUploadOptions = {}) {
     try {
-      // Upload image with specific options for profile pictures
       const uploadResult = await this.imageService.uploadImage(file, 'profiles', {
         width: options.width || 400,
         height: options.height || 400,
@@ -215,7 +205,6 @@ export class ProfileService {
         generateVariants: true
       });
 
-      // Update user profile with new image URL
       const updatedUser = await prisma.user.update({
         where: { id: this.user.id },
         data: {
@@ -235,7 +224,6 @@ export class ProfileService {
 
   async deleteProfileImage() {
     try {
-      // Update user profile to remove image URL
       const updatedUser = await prisma.user.update({
         where: { id: this.user.id },
         data: {

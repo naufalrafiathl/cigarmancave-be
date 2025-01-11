@@ -1,4 +1,3 @@
-// src/types/auth.types.ts
 import { Auth0JwtPayload } from '../config/auth';
 import 'express-oauth2-jwt-bearer';
 
@@ -24,7 +23,6 @@ export interface UserProfile {
   updatedAt: Date;
 }
 
-// Add Express Request type augmentation
 declare global {
   namespace Express {
     interface Request {

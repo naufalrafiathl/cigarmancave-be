@@ -1,4 +1,3 @@
-// src/controllers/profile.controller.ts
 import { Response, NextFunction } from "express";
 import { ProfileService } from "../services/profile.service";
 import { UnauthorizedError, BadRequestError } from "../errors";

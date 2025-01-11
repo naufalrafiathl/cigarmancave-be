@@ -1,4 +1,3 @@
-// src/controllers/cigar-insights.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { CigarInsightsService } from '../services/cigar-insights.service';
 import { BadRequestError } from '../errors';

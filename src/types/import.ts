@@ -1,4 +1,3 @@
-// src/types/import.ts
 export enum ImportFileType {
     IMAGE = 'IMAGE',
     PDF = 'PDF',
@@ -22,7 +21,7 @@ export enum ImportFileType {
   export interface CigarImportData {
     brand: string;
     name: string;
-    quantity: number; // Changed from optional to required
+    quantity: number; 
     purchasePrice?: number | null;
     purchaseDate?: Date | null;
     purchaseLocation?: string | null;

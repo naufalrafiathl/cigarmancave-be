@@ -1,4 +1,3 @@
-// src/services/achievement.service.ts
 import { PrismaClient } from '@prisma/client';
 import { RuleContext, AchievementEvent } from 'src/types/achievement';
 import { achievementRules } from './achievement.rules';
@@ -71,8 +70,8 @@ export class AchievementService {
         }
       });
 
-      // Here you could also emit a notification or WebSocket event
-      // to inform the user about their new achievement
+      // TODO: EMIT NOTIFICATION OR WEBSOCKET EVENTS
+      
     } catch (error) {
       console.error('Error awarding achievement:', error);
     }

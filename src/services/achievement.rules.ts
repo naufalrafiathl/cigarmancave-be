@@ -1,4 +1,3 @@
-// src/services/achievement.rules.ts
 import { AchievementRule, AchievementEventType } from "../types/achievement";
 
 const achievementRules: AchievementRule[] = [

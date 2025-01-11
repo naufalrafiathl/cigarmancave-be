@@ -1,4 +1,3 @@
-// src/scripts/sync-cigars.ts
 import { cigarSyncService } from '../services/sync/cigar-sync.service';
 
 async function main() {

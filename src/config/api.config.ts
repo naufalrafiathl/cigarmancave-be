@@ -1,4 +1,3 @@
-// src/config/api.config.ts
 export const API_CONFIG = {
     baseURL: 'https://cigars.p.rapidapi.com',
     headers: {

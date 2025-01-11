@@ -1,4 +1,3 @@
-// src/services/humidor.service.ts
 import { PrismaClient, Humidor, HumidorCigar } from "@prisma/client";
 import {
   CreateHumidorDto,
@@ -199,7 +198,6 @@ export class HumidorService {
     humidorCigarId: number,
     dto: UpdateHumidorCigarDto
   ): Promise<HumidorCigar> {
-    // First verify the humidor exists and belongs to the user
     const humidor = await this.prisma.humidor.findUnique({
       where: { id: humidorId },
     });
@@ -214,7 +212,6 @@ export class HumidorService {
       );
     }
 
-    // Verify the humidorCigar exists and belongs to this humidor
     const existingHumidorCigar = await this.prisma.humidorCigar.findFirst({
       where: {
         AND: [{ id: humidorCigarId }, { humidorId: humidorId }],
@@ -225,7 +222,6 @@ export class HumidorService {
       throw new NotFoundException("Cigar not found in this humidor");
     }
 
-    // Prepare update data
     const updateData: any = {};
 
     if (typeof dto.quantity !== "undefined") {
@@ -252,7 +248,6 @@ export class HumidorService {
       updateData.imageUrl = dto.imageUrl;
     }
 
-    // Update the humidorCigar
     return this.prisma.humidorCigar.update({
       where: { id: humidorCigarId },
       data: updateData,

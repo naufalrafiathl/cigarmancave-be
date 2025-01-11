@@ -1,4 +1,3 @@
-// src/services/import.service.ts
 import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
 import { createWorker } from "tesseract.js";
@@ -41,7 +40,6 @@ interface HumidorAddition {
   imageUrl?: string | null;
 }
 
-// Different types of import confirmations
 interface ExactMatchConfirmation {
   matchType: "exact";
   selectedCigarId: number;
@@ -91,7 +89,6 @@ export class ImportService {
   }
 
   async getUserQuota(userId: number): Promise<QuotaInfo> {
-    // Get the current month's usage
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -109,13 +106,11 @@ export class ImportService {
       },
     });
 
-    // Set quotas based on subscription level
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { isPremium: true },
     });
 
-    // Define quota limits based on subscription
     const imageQuota = user?.isPremium ? 60 : 10;
     const documentQuota = user?.isPremium ? 20 : 5;
 
@@ -149,15 +144,13 @@ export class ImportService {
   ): Promise<ValidationResult> {
     const errors: string[] = [];
 
-    // Check file size
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     if (fileSize > maxSize) {
       errors.push(
         `File size exceeds maximum allowed size of ${maxSize / 1024 / 1024}MB`
       );
     }
 
-    // Check quota
     const quota = await this.getUserQuota(userId);
     if (fileType === ImportFileType.IMAGE && quota.images.remaining <= 0) {
       errors.push("Monthly image import quota exceeded");
@@ -202,13 +195,11 @@ export class ImportService {
     const startTime = Date.now();
 
     try {
-      // Validate import
       const validation = await this.validateImport(userId, fileType, file.size);
       if (!validation.isValid) {
         throw new ValidationError(validation.errors.join(", "));
       }
 
-      // Process based on file type
       let result: ProcessingResult;
       switch (fileType) {
         case ImportFileType.IMAGE:
@@ -223,7 +214,6 @@ export class ImportService {
           throw new ValidationError("Unsupported file type");
       }
 
-      // Log the import
       const duration = Date.now() - startTime;
       result.duration = duration;
       await this.logImport(userId, fileType, result);
@@ -251,13 +241,12 @@ export class ImportService {
       const worker = await createWorker();
       const startTime = Date.now();
 
-      // First attempt with Tesseract OCR
       console.log("Running Tesseract OCR...");
       const ocrResult = await worker.recognize(file.buffer);
       await worker.terminate();
       console.log("OCR Result:", {
         confidence: ocrResult.data.confidence,
-        text: ocrResult.data.text.substring(0, 200) + "...", // Log first 200 chars
+        text: ocrResult.data.text.substring(0, 200) + "...", 
       });
 
       // If OCR confidence is high, process with GPT-4
@@ -328,12 +317,10 @@ export class ImportService {
           const parsedData = JSON.parse(cleanedResponse);
           console.log("Successfully parsed GPT-4 response:", parsedData);
 
-          // Validate that we have an array
           if (!Array.isArray(parsedData)) {
             throw new ProcessingError("GPT response is not an array");
           }
 
-          // Validate each cigar in the array
           const validatedCigars = parsedData.map((cigar) =>
             this.validateCigarData(cigar)
           );
@@ -426,11 +413,10 @@ export class ImportService {
         const rawResponse = visionResponse.choices[0]?.message?.content || "{}";
         console.log("Vision API Response:", rawResponse);
 
-        // Clean the response by removing markdown code blocks
         const cleanedResponse = rawResponse
-          .replace(/```json\n?/g, "") // Remove opening ```json
-          .replace(/```\n?/g, "") // Remove closing ```
-          .trim(); // Remove any extra whitespace
+          .replace(/```json\n?/g, "") 
+          .replace(/```\n?/g, "") 
+          .trim(); 
 
         console.log("Cleaned Response:", cleanedResponse);
 
@@ -537,8 +523,6 @@ export class ImportService {
       strength: this.validateStrength(row.strength || row.Strength),
     };
   }
-  // Inside src/services/import.service.ts
-  // Add this method before the private parseNumber method
 
   async findMatches(importData: CigarImportData[]): Promise<MatchResult> {
     const result: MatchResult = {
@@ -547,7 +531,6 @@ export class ImportService {
       newEntries: [],
     };
 
-    // Process all cigars in parallel
     const matchPromises = importData.map(async (cigar) => {
       try {
         const searchTerm = `${cigar.brand} ${cigar.name}`.toLowerCase().trim();
@@ -603,15 +586,12 @@ export class ImportService {
       }
     });
 
-    // Wait for all parallel operations to complete
     const matchResults = await Promise.all(matchPromises);
 
-    // Collect all cigar IDs that need details
     const allCigarIds = matchResults.flatMap(({ matches }) =>
       matches.map((m) => m.id)
     );
 
-    // Fetch all cigar details in one batch query
     const cigarDetailsMap = new Map(
       (await this.fetchCigarDetails(allCigarIds)).map((cigar) => [
         cigar.id,
@@ -619,14 +599,12 @@ export class ImportService {
       ])
     );
 
-    // Process the results using the cached details
     for (const { cigar, matches } of matchResults) {
       if (matches.length === 0) {
         result.newEntries.push(cigar);
         continue;
       }
 
-      // Handle exact matches (similarity >= 0.8)
       const exactMatches = matches.filter((m) => m.similarity >= 0.8);
       if (exactMatches.length > 0) {
         const existingCigar = cigarDetailsMap.get(exactMatches[0].id);
@@ -639,7 +617,6 @@ export class ImportService {
         }
       }
 
-      // Handle possible matches
       const top3Matches = matches
         .sort((a, b) => b.similarity - a.similarity)
         .slice(0, 3);
@@ -694,7 +671,6 @@ export class ImportService {
   ): string[] {
     const details: string[] = [];
 
-    // Brand match analysis
     if (match.brand_name.toLowerCase() === importData.brand.toLowerCase()) {
       details.push("Exact brand match");
     } else {
@@ -703,7 +679,6 @@ export class ImportService {
       );
     }
 
-    // Name match analysis
     if (match.cigar_name.toLowerCase() === importData.name.toLowerCase()) {
       details.push("Exact name match");
     } else {
@@ -712,7 +687,6 @@ export class ImportService {
       );
     }
 
-    // Specifications match
     if (importData.length && match.length) {
       const lengthDiff = Math.abs(importData.length - match.length);
       if (lengthDiff < 0.25) {
@@ -731,7 +705,6 @@ export class ImportService {
       }
     }
 
-    // Additional attributes
     const attributes = [
       { name: "wrapper", value: match.wrapper },
       { name: "strength", value: match.strength },
@@ -779,17 +752,16 @@ export class ImportService {
 
   private validateQuantity(value: any): number {
     if (typeof value === "number" && value > 0) {
-      return Math.floor(value); // Ensure whole number
+      return Math.floor(value); 
     }
     if (typeof value === "string") {
-      // Try to extract number from string (e.g., "2x", "qty: 3")
       const match = value.match(/\d+/);
       if (match) {
         const num = parseInt(match[0], 10);
         if (num > 0) return num;
       }
     }
-    return 1; // Default to 1 if no valid quantity found
+    return 1; 
   }
 
   private parseDate(value: any): Date | null {
@@ -798,11 +770,9 @@ export class ImportService {
     try {
       if (value instanceof Date) return value;
 
-      // Try parsing ISO format
       const date = new Date(value);
       if (!isNaN(date.getTime())) return date;
 
-      // Try parsing common date formats
       const formats = [
         "MM/DD/YYYY",
         "DD/MM/YYYY",
@@ -827,12 +797,10 @@ export class ImportService {
 
     const normalized = strength.toUpperCase().trim();
 
-    // Direct matches
     if (Object.values(CigarStrength).includes(normalized as CigarStrength)) {
       return normalized;
     }
 
-    // Common variations
     const strengthMap: Record<string, CigarStrength> = {
       LIGHT: CigarStrength.MILD,
       "MILD TO MEDIUM": CigarStrength.MILD_MEDIUM,
@@ -859,7 +827,6 @@ export class ImportService {
           try {
             let cigarId: number;
 
-            // Handle based on match type
             switch (selection.matchType) {
               case "exact":
               case "possible":
@@ -868,7 +835,6 @@ export class ImportService {
                 break;
 
               case "new":
-                // Find or create brand
                 let brand = await tx.brand.findFirst({
                   where: {
                     name: {
@@ -884,7 +850,6 @@ export class ImportService {
                   });
                 }
 
-                // Create new cigar
                 const newCigar = await tx.cigar.create({
                   data: {
                     name: selection.importData.name,
@@ -908,9 +873,7 @@ export class ImportService {
                 throw new ValidationError("Invalid match type");
             }
 
-            // Add to humidor if requested
             if (selection.addToHumidor && selection.humidorId) {
-              // Verify humidor ownership
               const humidor = await tx.humidor.findUnique({
                 where: {
                   id: selection.humidorId,
@@ -922,14 +885,12 @@ export class ImportService {
                 throw new ValidationError("Invalid humidor selection");
               }
 
-              // Helper function to convert date string to valid Date object
               const parseDate = (
                 dateString: string | Date | null | undefined
               ): Date | null => {
                 if (!dateString) return null;
                 if (dateString instanceof Date) return dateString;
 
-                // Try to parse the date string
                 const date = new Date(dateString);
                 return isNaN(date.getTime()) ? null : date;
               };

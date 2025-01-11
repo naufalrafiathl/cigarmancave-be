@@ -3,8 +3,6 @@ import { AuthController } from '../controllers/auth.controller';
 import { validateAuth0Token } from '../config/auth';
 
 const router = Router();
-
-// Public test endpoint - add underscore to unused req parameter
 router.get('/health', (_req, res) => {
   res.json({ 
     status: 'OK', 
@@ -13,7 +11,6 @@ router.get('/health', (_req, res) => {
   });
 });
 
-// Protected test endpoint
 router.get('/protected', validateAuth0Token, (req, res) => {
   res.json({ 
     status: 'OK', 

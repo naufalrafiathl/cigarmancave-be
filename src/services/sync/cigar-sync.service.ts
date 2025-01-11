@@ -1,4 +1,3 @@
-// src/services/sync/cigar-sync.service.ts
 import { PrismaClient } from '@prisma/client';
 import { cigarApiService } from '../external/cigar-api.service';
 import { chunkArray } from '../../utils/batch.utils';
@@ -73,23 +72,19 @@ export class CigarSyncService {
     try {
       console.log('Starting data sync...');
       
-      // Test API connection
       const isConnected = await cigarApiService.testConnection();
       if (!isConnected) {
         throw new Error('Could not connect to the cigar API');
       }
       
-      // Fetch brands
       console.log('Fetching brands...');
       const brands = await cigarApiService.fetchAllBrands();
       console.log(`Successfully fetched ${brands.length} brands`);
       
-      // Save brands
       console.log('Saving brands to database...');
       await this.saveBrands(brands);
       console.log('Successfully saved all brands');
       
-      // Process brands in chunks
       const brandChunks = chunkArray(brands, 5);
       let processedBrands = 0;
       let totalCigars = 0;
@@ -135,7 +130,6 @@ export class CigarSyncService {
     try {
       console.log(`Starting sync for brand ID: ${brandId}`);
       
-      // Fetch brand details
       const brands = await cigarApiService.fetchAllBrands();
       const brand = brands.find(b => b.brandId === brandId);
       
@@ -143,11 +137,9 @@ export class CigarSyncService {
         throw new Error(`Brand with ID ${brandId} not found`);
       }
       
-      // Save brand
       await this.saveBrands([brand]);
       console.log(`Saved brand: ${brand.name}`);
       
-      // Fetch and save cigars
       const cigars = await cigarApiService.fetchCigarsForBrand(brandId);
       console.log(`Found ${cigars.length} cigars for brand ${brand.name}`);
       
