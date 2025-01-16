@@ -40,10 +40,17 @@ model User {
   fullName   String?
   location   String?
   profileImageUrl String?
-  isPremium Boolean @default(false)
   isOnboarded Boolean @default(false)
   badgeDisplayPreference Json
-  
+
+  // STRIPE - SUBSCRIPTION
+  stripeCustomerId String? @unique
+  subscriptionId String?
+  subscriptionStatus String?
+  subscriptionPriceId String?
+  subscriptionCurrentPeriodEnd DateTime?
+  isPremium Boolean @default(false)
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

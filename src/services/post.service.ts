@@ -1,4 +1,3 @@
-// src/services/post.service.ts
 import { PrismaClient, Prisma } from "@prisma/client";
 import {
   NotFoundError,
@@ -282,7 +281,6 @@ export class PostService {
         prisma.postImage.deleteMany({
           where: { postId },
         }),
-        // Finally delete the post
         prisma.post.delete({
           where: { id: postId },
         }),

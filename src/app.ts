@@ -14,7 +14,7 @@ import profileRoutes from './routes/profile.routes'
 import cigarInsightsRoutes from './routes/cigar-insights.routes';
 import achievementRoutes from './routes/achievement.routes';
 import importRoutes from './routes/import.routes';
-
+import subscriptionRoutes from './routes/subscription.routes';
 
 import { errorHandler } from "./middleware/error.middleware";
 
@@ -34,6 +34,11 @@ app.use(
   })
 );
 app.use(cors(corsOptions));
+
+// Raw body parser for Stripe webhook
+app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }));
+
+// Other body parsers
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -58,9 +63,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/cigars', cigarInsightsRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/import', importRoutes);
-
-
-
+app.use('/api/subscriptions', subscriptionRoutes);
 
 app.use(errorHandler);
 

@@ -71,7 +71,7 @@ export class AchievementService {
       });
 
       // TODO: EMIT NOTIFICATION OR WEBSOCKET EVENTS
-      
+
     } catch (error) {
       console.error('Error awarding achievement:', error);
     }
@@ -93,9 +93,7 @@ export class AchievementService {
       throw new Error('User not found');
     }
 
-    // Get all achievements for availability check
     const allAchievements = await this.prisma.achievement.findMany();
-
     return {
       earned: userWithAchievements.achievements.map(ua => ({
         ...ua.achievement,

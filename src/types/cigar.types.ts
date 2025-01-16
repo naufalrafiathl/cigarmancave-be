@@ -8,7 +8,7 @@ export interface ExternalBrand {
     brandId: number;
     name: string;
     length: number;
-    ringGauge: number;
+    ringGauge: number; 
     country: string;
     filler: string;
     wrapper: string;
