@@ -1,0 +1,388 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+enum CigarStrength {
+  MILD
+  MILD_MEDIUM
+  MEDIUM
+  MEDIUM_FULL
+  FULL
+}
+
+model User {
+  id        Int   @id @default(autoincrement())
+  email     String   @unique @db.VarChar(255)
+  password  String? @db.VarChar(60)
+  phoneNumber String?
+
+  // Auth0 user id
+  auth0Id  String?  @unique
+  emailVerified Boolean @default(false)
+  picture       String?
+  lastLogin     DateTime?
+  locale        String?
+
+  passwordHash String?
+  fullName   String?
+  location   String?
+  profileImageUrl String?
+  isOnboarded Boolean @default(false)
+  badgeDisplayPreference Json
+
+  // STRIPE - SUBSCRIPTION
+  stripeCustomerId String? @unique
+  subscriptionId String?
+  subscriptionStatus String?
+  subscriptionPriceId String?
+  subscriptionCurrentPeriodEnd DateTime?
+  isPremium Boolean @default(false)
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  importLogs ImportLog[]
+  humidors Humidor[]
+  reviews Review[]
+  posts Post[]
+  comments Comment[]
+  likes Like[]
+  achievements UserAchievement[]
+  notifications Notification[]
+  followedBy Relationship[] @relation("followedBy")
+  following Relationship[] @relation("following")
+  tradesInitiated Trade[] @relation("tradesInitiator")
+  tradesReceived Trade[] @relation("tradesReceiver")
+  tradeItemsOffered TradeItems[] @relation("offeredItems")
+  tradeItemsReceived TradeItems[] @relation("receivedItems")
+  @@index([auth0Id])
+}
+
+model Humidor {
+  id Int @id @default(autoincrement())
+  name String
+  description String?
+  imageUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  cigars HumidorCigar[]
+}
+
+model HumidorCigar {
+  id Int @id @default(autoincrement())
+  quantity Int
+  purchasePrice Float
+  purchaseDate DateTime
+  purchaseLocation String?
+  notes String?
+  imageUrl String?
+
+  humidor Humidor @relation(fields: [humidorId], references: [id])
+  humidorId Int
+  cigar Cigar @relation(fields: [cigarId], references: [id])
+  cigarId Int
+
+  @@index([humidorId])
+  @@index([cigarId])
+}
+
+model Brand {
+  id Int @id @default(autoincrement())
+  name String
+
+  // Relationships
+  cigars Cigar[]
+
+  @@index([name]) // Index for brand name searches
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  content     String
+  imageUrls   String[]  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  images      PostImage[]
+
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  review      Review?   @relation(fields: [reviewId], references: [id])
+  reviewId    Int?
+  comments    Comment[]
+  likes       Like[]
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([reviewId])
+}
+
+model PostImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
+  
+  @@index([postId])
+}
+
+model Cigar {
+  id Int @id @default(autoincrement())
+  name String
+  length Float?
+  ringGauge Float?
+  country String?
+  filler String?
+  wrapper String?
+  binder String?
+  color String?
+  strength String?
+  premiumAssistantMessage Json? // New field
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  brand Brand @relation(fields: [brandId], references: [id])
+  brandId Int
+  humidorCigars HumidorCigar[]
+  reviews Review[]
+  tradeItems TradeItems[]
+
+  @@index([brandId, name]) // Compound index for faster lookups
+  @@index([name]) // Index for name searches
+}
+
+model Pairing {
+  id        Int      @id @default(autoincrement())
+  name      String   // e.g., "Coffee", "Whiskey", "Wine"
+  type      String   // Category like "Beverage", "Food"
+  reviews   ReviewPairing[]
+
+    @@unique([name, type]) 
+}
+
+model ReviewPairing {
+  id        Int      @id @default(autoincrement())
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reviewId  Int
+  pairing   Pairing  @relation(fields: [pairingId], references: [id])
+  pairingId Int
+  notes     String? 
+
+  @@unique([reviewId, pairingId])
+  @@index([reviewId])
+  @@index([pairingId])
+}
+
+model Review {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  date DateTime
+  duration Int?
+  price Float?
+  images ReviewImage[]
+
+  strength CigarStrength?
+
+  // General scores (1-5)
+  constructionScore Int?
+  drawScore Int?
+  flavorScore Int?
+  burnScore Int?
+  impressionScore Int?
+  overallScore Float?
+  FirstThird String[]
+  SecondThird String[]
+  FinalThird String[]
+
+  // Flavor profile scores (1-3)
+  flavorPepperScore Int?
+  flavorChocolateScore Int?
+  flavorCreamyScore Int?
+  flavorLeatherScore Int?
+  flavorWoodyScore Int?
+  flavorEarthyScore Int?
+  flavorNuttyScore Int?
+  flavorSweetScore Int?
+  flavorFruityScore Int?
+  flavorGrassyScore Int?
+  flavorBerryScore Int?
+  flavorCoffeeScore Int?
+  flavorBittersScore Int?
+
+  notes String?
+  buyAgain Boolean?
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  cigar Cigar @relation(fields: [cigarId], references: [id])
+  cigarId Int
+  posts Post[]
+  pairings ReviewPairing[]
+
+  @@index([userId, createdAt])
+  @@index([cigarId, overallScore])
+}
+
+model ReviewImage {
+  id Int @id @default(autoincrement())
+  url String
+  review Review @relation(fields: [reviewId], references: [id])
+  reviewId Int
+}
+
+model Comment {
+  id Int @id @default(autoincrement())
+  content String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  post Post @relation(fields: [postId], references: [id]) 
+  postId Int
+
+  // Self-referential relationship
+  parent Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  parentId Int?
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Like {
+  createdAt DateTime @default(now())
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  post Post @relation(fields: [postId], references: [id]) 
+  postId Int 
+
+  @@id([postId,userId])
+}
+
+model Achievement {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique  // Add unique constraint
+  description String?
+  iconUrl     String?
+  isPremium   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  users       UserAchievement[]
+
+  @@index([isPremium])
+}
+
+model UserAchievement {
+  earnedAt     DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+  achievement  Achievement @relation(fields: [achievementId], references: [id])
+  achievementId Int
+
+  @@id([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@index([earnedAt])
+}
+
+model Relationship {
+  id Int @id @default(autoincrement())
+  follower User @relation("followedBy", fields: [followerId], references: [id])
+  followerId Int
+  following User @relation("following", fields: [followingId], references: [id])
+  followingId Int
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Notification {
+  id Int @id @default(autoincrement())
+  userId Int
+  type String
+  content String
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Trade {
+  id Int @id @default(autoincrement())
+  status String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships 
+  initiator User @relation("tradesInitiator", fields: [initiatorId], references: [id])
+  initiatorId Int
+  receiver User @relation("tradesReceiver", fields: [receiverId], references: [id])
+  receiverId Int  
+  items TradeItems[]
+}
+
+model TradeItems {
+  id Int @id @default(autoincrement())
+  quantity Int
+
+  // Relationships
+  trade Trade @relation(fields: [tradeId], references: [id])
+  tradeId Int
+  cigar Cigar @relation(fields: [cigarId], references: [id])
+  cigarId Int
+  offeredBy User @relation("offeredItems", fields: [offeredById], references: [id])
+  offeredById Int
+  receivedBy User @relation("receivedItems", fields: [receivedById], references: [id])
+  receivedById Int
+}
+
+// Add to schema.prisma
+
+model ImportLog {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  fileType        String   // Corresponds to ImportFileType enum
+  processingMethod String  // Corresponds to ProcessingMethod enum
+  confidence      Float    @default(0)
+  cost           Float    @default(0)
+  duration       Int      // Processing duration in milliseconds
+  success        Boolean
+  error          String?
+  createdAt      DateTime @default(now())
+  
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([fileType, createdAt])
+}
