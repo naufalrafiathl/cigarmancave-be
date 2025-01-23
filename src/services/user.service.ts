@@ -16,6 +16,7 @@ export class UserService {
           fullName: auth0User.name,
           profileImageUrl: auth0User.picture,
           lastLogin: new Date(),
+          isOnboarded: true
         },
         create: {
           auth0Id: auth0User.sub,

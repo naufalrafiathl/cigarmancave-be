@@ -49,6 +49,7 @@ model User {
   subscriptionStatus String?
   subscriptionPriceId String?
   subscriptionCurrentPeriodEnd DateTime?
+  cancelAtPeriodEnd         Boolean   @default(false)
   isPremium Boolean @default(false)
 
 

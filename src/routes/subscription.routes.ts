@@ -27,6 +27,14 @@ const verifyCheckout: AuthenticatedRequestHandler =
 const subscriptionStatus: AuthenticatedRequestHandler =
   subscriptionController.getSubscriptionStatus;
 
+router.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  (req: Request, res: Response, next: NextFunction) => {
+    subscriptionController.handleWebhook(req, res, next);
+  }
+);
+
 router.get("/plans", getPlans);
 
 router.use(authenticate);
@@ -36,12 +44,5 @@ router.post("/verify-session", verifyCheckout as RequestHandler);
 router.get("/status", subscriptionStatus as RequestHandler);
 
 // Webhook route with raw body parsing
-router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  (req: Request, res: Response, next: NextFunction) => {
-    subscriptionController.handleWebhook(req, res, next);
-  }
-);
 
 export default router;

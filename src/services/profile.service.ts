@@ -151,6 +151,7 @@ export class ProfileService {
   }
 
   async updateProfile(data: UpdateProfileData) {
+    console.log("TEST MASUK")
     if (data.fullName && (data.fullName.length < 2 || data.fullName.length > 50)) {
       throw new ValidationError('Full name must be between 2 and 50 characters');
     }
@@ -186,7 +187,8 @@ export class ProfileService {
           isPremium: true,
           badgeDisplayPreference: true,
           phoneNumber: true,
-          createdAt: true
+          createdAt: true,
+          isOnboarded: true 
         }
       });
 

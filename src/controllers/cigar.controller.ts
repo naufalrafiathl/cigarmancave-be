@@ -42,4 +42,61 @@ export class CigarController {
       return res.status(500).json({ message: 'Internal server error' });
     }
   }
+
+  async createCigar(req: Request, res: Response) {
+    try {
+      const {
+        name,
+        brand,
+        length,
+        ringGauge,
+        country,
+        wrapper,
+        binder,
+        filler,
+        color,
+        strength
+      } = req.body;
+
+      // Validate required fields
+      if (!name || !brand) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Name and brand are required fields'
+        });
+      }
+
+      // Create the cigar with all optional fields
+      const cigar = await this.cigarService.createCigar({
+        name,
+        brand,
+        length: length ? Number(length) : null,
+        ringGauge: ringGauge ? Number(ringGauge) : null,
+        country: country || null,
+        wrapper: wrapper || null,
+        binder: binder || null,
+        filler: filler || null,
+        color: color || null,
+        strength: strength || null
+      });
+
+      // Return just the cigar data to match frontend expectations
+      return res.status(201).json(cigar);
+
+    } catch (error) {
+      console.error('Create cigar error:', error);
+
+      // Handle specific validation errors
+      if (error instanceof Error && error.name === 'ValidationError') {
+        return res.status(400).json({
+          message: error.message
+        });
+      }
+
+      // Handle other errors
+      return res.status(500).json({
+        message: 'Failed to create cigar'
+      });
+    }
+  }
 }

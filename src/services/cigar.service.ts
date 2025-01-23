@@ -1,5 +1,19 @@
-// src/services/cigar.service.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Cigar } from "@prisma/client";
+
+
+interface CigarCreateInput {
+  name: string;
+  brand: string;
+  length?: number | null;
+  ringGauge?: number | null;
+  country?: string | null;
+  wrapper?: string | null;
+  binder?: string | null;
+  filler?: string | null;
+  color?: string | null;
+  strength?: string | null;
+  premiumAssistantMessage?: any | null;
+}
 
 interface CigarVariant {
   id: number;
@@ -34,6 +48,13 @@ interface CigarSearchRawResult {
 }
 
 const prisma = new PrismaClient();
+
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
 
 export class CigarService {
   async search(query: string): Promise<CigarSearchResponse> {
@@ -152,4 +173,103 @@ export class CigarService {
       strength: cigar.strength,
     };
   }
+
+  async createCigar(data: CigarCreateInput): Promise<Cigar> {
+    // Validate required fields
+    if (!data.name || !data.brand) {
+      throw new ValidationError("Name and brand are required fields");
+    }
+
+    // Validate numeric fields if provided
+    if (data.length !== undefined && data.length !== null) {
+      if (data.length <= 0 || data.length > 12) {
+        throw new ValidationError("Length must be between 0 and 12 inches");
+      }
+    }
+
+    if (data.ringGauge !== undefined && data.ringGauge !== null) {
+      if (data.ringGauge <= 0 || data.ringGauge > 80) {
+        throw new ValidationError("Ring gauge must be between 0 and 80");
+      }
+    }
+
+    try {
+      // Find or create brand
+      // First try to find the brand
+      let brand = await prisma.brand.findFirst({
+        where: {
+          name: {
+            equals: data.brand.trim(),
+            mode: 'insensitive'  // Case insensitive search
+          }
+        }
+      });
+
+      // If brand doesn't exist, create it
+      if (!brand) {
+        brand = await prisma.brand.create({
+          data: {
+            name: data.brand.trim()
+          }
+        });
+      }
+
+      // Create the cigar
+      const cigar = await prisma.cigar.create({
+        data: {
+          name: data.name.trim(),
+          brandId: brand.id,
+          length: data.length,
+          ringGauge: data.ringGauge,
+          country: data.country?.trim() || null,
+          wrapper: data.wrapper?.trim() || null,
+          binder: data.binder?.trim() || null,
+          filler: data.filler?.trim() || null,
+          color: data.color?.trim() || null,
+          strength: this.validateStrength(data.strength),
+          premiumAssistantMessage: data.premiumAssistantMessage || null
+        },
+        include: {
+          brand: true
+        }
+      });
+
+      return cigar;
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+      console.error('Error creating cigar:', error);
+      throw new Error('Failed to create cigar');
+    }
+  }
+
+  private validateStrength(strength?: string | null): string | null {
+    if (!strength) return null;
+
+    const validStrengths = [
+      'MILD',
+      'MILD_MEDIUM',
+      'MEDIUM',
+      'MEDIUM_FULL',
+      'FULL'
+    ];
+
+    const normalized = strength.toUpperCase().replace(/[^A-Z]/g, '_');
+
+    if (validStrengths.includes(normalized)) {
+      return normalized;
+    }
+
+    // Handle common variations
+    const strengthMap: Record<string, string> = {
+      'LIGHT': 'MILD',
+      'MILD_TO_MEDIUM': 'MILD_MEDIUM',
+      'MEDIUM_TO_FULL': 'MEDIUM_FULL'
+    };
+
+    return strengthMap[normalized] || null;
+  }
+
+
 }

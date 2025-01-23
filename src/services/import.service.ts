@@ -111,8 +111,8 @@ export class ImportService {
       select: { isPremium: true },
     });
 
-    const imageQuota = user?.isPremium ? 60 : 10;
-    const documentQuota = user?.isPremium ? 20 : 5;
+    const imageQuota = user?.isPremium ? 40 : 0;
+    const documentQuota = user?.isPremium ? 40 : 0;
 
     const imageUsage =
       usage.find((u) => u.fileType === ImportFileType.IMAGE)?._count.id || 0;
@@ -965,5 +965,5 @@ export class ImportService {
       );
     }
   }
-  
+
 }
