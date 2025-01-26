@@ -255,7 +255,7 @@ export class ImportService {
       if (ocrResult.data.confidence > 70) {
         console.log("OCR confidence > 70, processing with GPT-4...");
         const completion = await this.openai.chat.completions.create({
-          model: "gpt-4",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "system",

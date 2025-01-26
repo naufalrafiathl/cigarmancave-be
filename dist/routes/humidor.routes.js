@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const humidor_controller_1 = require("../controllers/humidor.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const validation_middleware_1 = require("../middleware/validation.middleware");
+const humidor_schema_1 = require("../schemas/humidor.schema");
+const router = (0, express_1.Router)();
+const humidorController = new humidor_controller_1.HumidorController();
+router.use(auth_middleware_1.authenticate);
+router.post('/', (0, validation_middleware_1.validateRequest)(humidor_schema_1.CreateHumidorSchema), humidorController.createHumidor);
+router.get('/', humidorController.getUserHumidors);
+router.get('/:humidorId', humidorController.getHumidor);
+router.put('/:humidorId', (0, validation_middleware_1.validateRequest)(humidor_schema_1.UpdateHumidorSchema), humidorController.updateHumidor);
+router.delete('/:humidorId', humidorController.deleteHumidor);
+router.post('/:humidorId/cigars', (0, validation_middleware_1.validateRequest)(humidor_schema_1.AddCigarToHumidorSchema), humidorController.addCigarToHumidor);
+router.put('/:humidorId/cigars/:humidorCigarId', (0, validation_middleware_1.validateRequest)(humidor_schema_1.UpdateHumidorCigarSchema), humidorController.updateCigarInHumidor);
+router.delete('/:humidorId/cigars/:humidorCigarId', humidorController.removeCigarFromHumidor);
+exports.default = router;
+//# sourceMappingURL=humidor.routes.js.map
