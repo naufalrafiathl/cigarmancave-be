@@ -61,6 +61,7 @@ export class ImportController {
       }
 
       const quota = await this.importService.getUserQuota(req.user.id);
+      console.log("ini quote",quota)
 
       res.json({
         status: "success",

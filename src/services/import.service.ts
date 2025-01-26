@@ -111,8 +111,8 @@ export class ImportService {
       select: { isPremium: true },
     });
 
-    const imageQuota = user?.isPremium ? 40 : 0;
-    const documentQuota = user?.isPremium ? 40 : 0;
+    const imageQuota = user?.isPremium ? 40 : 2;
+    const documentQuota = user?.isPremium ? 40 : 2;
 
     const imageUsage =
       usage.find((u) => u.fileType === ImportFileType.IMAGE)?._count.id || 0;
@@ -250,7 +250,6 @@ export class ImportService {
       });
 
       // If OCR confidence is high, process with GPT-4
-      // Modify the GPT-4 processing section in processImage method:
 
       if (ocrResult.data.confidence > 70) {
         console.log("OCR confidence > 70, processing with GPT-4...");
