@@ -21,7 +21,8 @@ export class FeedService {
       select: {
         id: true,
         fullName: true,
-        profileImageUrl: true
+        profileImageUrl: true,
+        isPremium: true
       }
     },
     review: {
@@ -52,7 +53,8 @@ export class FeedService {
           select: {
             id: true,
             fullName: true,
-            profileImageUrl: true
+            profileImageUrl: true,
+            isPremium: true
           }
         },
         replies: {
@@ -61,7 +63,8 @@ export class FeedService {
               select: {
                 id: true,
                 fullName: true,
-                profileImageUrl: true
+                profileImageUrl: true,
+                isPremium: true
               }
             }
           }
